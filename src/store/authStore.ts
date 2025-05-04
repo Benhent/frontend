@@ -1,0 +1,271 @@
+import { create } from "zustand";
+import axios, { AxiosError } from "axios";
+
+const API_URL = import.meta.env.MODE === "development" ? "http://localhost:5000/api/auth" : "/api/auth";
+
+axios.defaults.withCredentials = true;
+
+interface User {
+  _id: string;
+  name: string;
+  username: string;
+  email: string;
+  isVerified: boolean;
+  avatarUrl?: string;
+  role?: string;
+  link?: string;
+  national?: string;
+}
+
+interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  error: string | null;
+  isLoading: boolean;
+  isCheckingAuth: boolean;
+  message: string | null;
+  signup: (
+    name: string,
+    username: string,
+    email: string,
+    password: string,
+    link?: string,
+    national?: string,
+    avatarUrl?: string
+  ) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  verifyEmail: (code: string) => Promise<{ message: string }>;
+  resendVerification: (email: string) => Promise<void>;
+  checkAuth: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (token: string, password: string, confirmPassword: string) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string, confirmPassword: string) => Promise<void>;
+  // getProfile: () => Promise<void>;
+  updateProfile: (
+    name: string,
+    username: string,
+    link: string,
+    national: string,
+    avatarFile: File | null
+  ) => Promise<void>;
+}
+
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  isAuthenticated: false,
+  error: null,
+  isLoading: false,
+  isCheckingAuth: true,
+  message: null,
+
+  signup: async (name, username, email, password, link, national, avatarUrl) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.post<{ user: User }>(`${API_URL}/signup`, {
+        name,
+        username,
+        email,
+        password,
+        link,
+        national,
+        avatarUrl
+      });
+      set({ user: response.data.user, isAuthenticated: true, isLoading: false });
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      set({ error: axiosError.response?.data?.message || "Error signing up", isLoading: false });
+      throw error;
+    }
+  },
+
+  login: async (email, password) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.post<{ user: User }>(`${API_URL}/login`, { email, password });
+      set({
+        isAuthenticated: true,
+        user: response.data.user,
+        error: null,
+        isLoading: false,
+      });
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      set({ error: axiosError.response?.data?.message || "Error logging in", isLoading: false });
+      throw error;
+    }
+  },
+
+  logout: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      await axios.post(`${API_URL}/logout`);
+      set({ user: null, isAuthenticated: false, error: null, isLoading: false });
+    } catch (error) {
+      set({ error: "Error logging out", isLoading: false });
+      throw error;
+    }
+  },
+
+  verifyEmail: async (code) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.post<{ user: User; message: string }>(`${API_URL}/verify-email`, { code });
+      set({ user: response.data.user, isAuthenticated: true, isLoading: false });
+      return { message: response.data.message };
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      set({ error: axiosError.response?.data?.message || "Error verifying email", isLoading: false });
+      throw error;
+    }
+  },
+
+  resendVerification: async (email) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.post<{ message: string }>(`${API_URL}/resend-verification`, { email });
+      set({ 
+        message: response.data.message, 
+        isLoading: false 
+      });
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      set({
+        isLoading: false,
+        error: axiosError.response?.data?.message || "Error resending verification email",
+      });
+      throw error;
+    }
+  },
+  
+  checkAuth: async () => {
+    set({ isCheckingAuth: true, error: null });
+    try {
+      const response = await axios.get<{ user: User }>(`${API_URL}/check`);
+      set({ user: response.data.user, isAuthenticated: true, isCheckingAuth: false });
+    } catch (error) {
+      set({ error: null, isCheckingAuth: false, isAuthenticated: false });
+    }
+  },
+
+  forgotPassword: async (email) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.post<{ message: string }>(`${API_URL}/forgot-password`, { email });
+      set({ message: response.data.message, isLoading: false });
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      set({
+        isLoading: false,
+        error: axiosError.response?.data?.message || "Error sending reset password email",
+      });
+      throw error;
+    }
+  },
+
+  resetPassword: async (token, password, confirmPassword) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.post<{ message: string }>(`${API_URL}/reset-password/${token}`, {
+        password,
+        confirmPassword
+      });
+      set({ message: response.data.message, isLoading: false });
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      set({
+        isLoading: false,
+        error: axiosError.response?.data?.message || "Error resetting password",
+      });
+      throw error;
+    }
+  },
+
+  changePassword: async (currentPassword, newPassword, confirmPassword) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.put<{ message: string }>(`${API_URL}/change-password`, {
+        currentPassword,
+        newPassword,
+        confirmPassword
+      });
+      set({ message: response.data.message, isLoading: false });
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      set({
+        isLoading: false,
+        error: axiosError.response?.data?.message || "Error changing password",
+      });
+      throw error;
+    }
+  },
+
+  // getProfile: async () => {
+  //   set({ isLoading: true, error: null })
+  //   try {
+  //     const response = await axios.get<{ success: boolean; user: User }>(`http://localhost:5000/api/profile`);
+
+  //     if (response.data.success && response.data.user) {
+  //       set({
+  //         user: response.data.user,
+  //         isAuthenticated: true,
+  //         isLoading: false,
+  //       })
+  //     } else {
+  //       set({
+  //         isLoading: false,
+  //         error: "Failed to fetch profile data",
+  //       })
+  //     }
+  //   } catch (error) {
+  //     const axiosError = error as AxiosError<{ message: string }>
+  //     set({
+  //       error: axiosError.response?.data?.message || "Error fetching profile",
+  //       isLoading: false,
+  //     })
+  //   }
+  // },
+
+  updateProfile: async (name, username, link, national, avatarFile) => {
+    set({ isLoading: true, error: null });
+    try {
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("username", username);
+      formData.append("link", link);
+      formData.append("national", national);
+      if (avatarFile) {
+        formData.append("avatar", avatarFile);
+      }
+
+      const response = await axios.put<{ success: boolean; user: User; message: string }>(`http://localhost:5000/api/profile/update-profile`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      if (response.data.success && response.data.user) {
+        set({
+          user: response.data.user,
+          isLoading: false,
+          message: response.data.message || "Profile updated successfully"
+        });
+      } else {
+        set({
+          error: "Failed to update profile",
+          isLoading: false
+        });
+      }
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      set({
+        error: axiosError.response?.data?.message || "Error updating profile",
+        isLoading: false
+      });
+      throw error;
+    }
+  },
+  clearMessage: () => set({ message: null, error: null }),
+}));
+
+export default useAuthStore;

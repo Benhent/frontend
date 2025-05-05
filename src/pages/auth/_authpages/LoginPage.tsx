@@ -1,7 +1,7 @@
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Mail, Lock, Loader } from 'lucide-react';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Input from "../../../components/Input";
 import { useAuthStore } from "../../../store/authStore";
 import { IconType } from "react-icons";
@@ -10,7 +10,14 @@ const LoginPage = () => {
     const [email, setEmail] = useState<string>("");
     const [password, setPassword] = useState<string>("");
 
-    const { login, isLoading, error } = useAuthStore();
+    const { login, isLoading, error, isAuthenticated } = useAuthStore();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate("/");
+        }
+    }, [isAuthenticated, navigate]);
 
     const handleLogin = async (e: FormEvent) => {
         e.preventDefault();
@@ -22,7 +29,7 @@ const LoginPage = () => {
             initial={{ opacity: 0, y: 20 }} 
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="max-w-md w-full bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden"
+            className="max-w-md w-full bg-gray-800 bg-opacity-50 backdrop-filter backdrop-blur-xl rounded-2xl shadow-xl overflow-hidden mx-auto"
         >
             <div className="p-8">
                 <h2 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-sixth to-fifth text-transparent bg-clip-text">

@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
@@ -14,46 +14,56 @@ import ResetPasswordPage from "./pages/auth/_authpages/ResetPasswordPage";
 import VerifyEmailPage from "./pages/auth/_authpages/VerifyEmailPage";
 
 
+import Dashboard from "./pages/root/_rootpages/Dashboard";
 import ProfilePage from "./pages/root/_rootpages/ProfilePage";
+import Security from "./pages/root/_rootpages/Security";
+import NavBar from "./components/NavBar";
+import Footer from "./components/Footer";
 
 const App: React.FC = () => {
   const { isCheckingAuth, checkAuth } = useAuthStore();
+  const location = useLocation();
 
   useEffect(() => {
     checkAuth();
-  }, [checkAuth]);
+  }, []);
 
   if (isCheckingAuth) return <LoadingSpinner />;
 
+  // Danh sách các private routes
+  const privateRoutes = ['/login', '/signup', '/forgot-password', '/reset-password'];
+  const isPrivateRoute = privateRoutes.some(route => location.pathname.startsWith(route));
+
   return (
-    <main
-      className='min-h-screen flex items-center justify-center relative overflow-hidden 
-      bg-gradient-to-br from-secondary via-third to-fourth'
-    >
+    <div className="min-h-screen flex flex-col">
+      {!isPrivateRoute && <NavBar />}
+      <main className={`flex-1 flex items-center justify-center ${!isPrivateRoute ? 'pt-16' : ''}`}>
+        <Routes>
+          {/* public routes */}
+          {/* <Route element={<ProtectedRoute/>}> */}
+            <Route path='/' element={<Dashboard />}/>
+            <Route path='/profile' element={<ProfilePage />}/>
+            <Route path='/security' element={<Security />}/>
+          {/* </Route> */}
 
-      <Routes>
-        {/* public routes */}
-        <Route element={<ProtectedRoute/>}>
-          <Route path='/' element={<ProfilePage />}/>
-        </Route>
+          {/* private routes */}
+          {/* <Route element={<RedirectAuthenticatedUser/>}> */}
+            <Route path='/signup' element={<RegisterPage/>}/>
+            <Route path='/login' element={<LoginPage />}/>
+            <Route path='/forgot-password' element={<ForgotPasswordPage />}/>
+            <Route path='/reset-password/:token' element={<ResetPasswordPage />}/>
+          {/* </Route> */}
+          
+          {/* email verify */}
+          <Route path='/verify-email' element={<VerifyEmailPage />} />
 
-
-        {/* private routes */}
-        <Route element={<RedirectAuthenticatedUser/>}>
-          <Route path='/signup' element={<RegisterPage/>}/>
-          <Route path='/login' element={<LoginPage />}/>
-          <Route path='/forgot-password' element={<ForgotPasswordPage />}/>
-          <Route path='/reset-password/:token' element={<ResetPasswordPage />}/>
-        </Route>
-        
-        {/* email verify */}
-        <Route path='/verify-email' element={<VerifyEmailPage />} />
-
-        {/* catch all routes */}
-        <Route path='*' element={<Navigate to='/' replace />} />
-      </Routes>
+          {/* catch all routes */}
+          <Route path='*' element={<Navigate to='/' replace />} />
+        </Routes>
+      </main>
+      {!isPrivateRoute && <Footer />}
       <Toaster />
-    </main>
+    </div>
   );
 }
 

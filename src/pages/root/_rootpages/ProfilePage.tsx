@@ -28,6 +28,7 @@ const ProfilePage = () => {
         national: user.national || "",
       })
       setAvatarPreview(user.avatarUrl || null)
+      setIsPageLoading(false)
     }
   }, [user])
 
@@ -107,7 +108,7 @@ const ProfilePage = () => {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="bg-gray-800 shadow-lg rounded-lg px-8 pt-6 pb-8 mb-4">
+      <div className="shadow-lg rounded-lg px-8 pt-6 pb-8 mb-4">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-white text-center">Update Your Profile</h2>
           <button

@@ -1,15 +1,48 @@
+"use client"
+
 import { useState, useEffect, useRef } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useLocation } from "react-router-dom"
 import { useAuthStore } from "../store/authStore"
-import { Menu, X, User, LogOut, ChevronDown, Home, BookOpen, MessageSquare, Settings } from "lucide-react"
+import {
+  Menu,
+  X,
+  User,
+  LogOut,
+  ChevronDown,
+  Home,
+  BookOpen,
+  MessageSquare,
+  Settings,
+  FileText,
+  Search,
+  HelpCircle,
+} from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
-const Navbar = () => {
+const NavBar = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const { user, isAuthenticated, logout } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const profileRef = useRef<HTMLDivElement>(null)
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        setScrolled(true)
+      } else {
+        setScrolled(false)
+      }
+    }
+
+    window.addEventListener("scroll", handleScroll)
+    return () => {
+      window.removeEventListener("scroll", handleScroll)
+    }
+  }, [])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -60,57 +93,79 @@ const Navbar = () => {
     setIsOpen(false)
   }
 
+  const isAdmin = user?.role === "admin"
+  const isEditor = user?.role === "editor"
+  const isReviewer = user?.role === "reviewer"
+  const isAuthor = user?.role === "author" || true // Default to showing author options if no role specified
+
+  const isActive = (path: string) => {
+    return location.pathname === path ? "bg-primary/20 text-primary" : ""
+  }
+
   return (
-    <nav className="bg-gray-800 text-white shadow-lg">
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? "bg-background/95 backdrop-blur-sm shadow-md" : "bg-background"
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          {/* Logo and desktop navigation */}
+          {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <div className="h-8 w-8 bg-green-500 rounded-full flex items-center justify-center mr-2">
-                <span className="font-bold text-white">A</span>
-              </div>
-              <span className="font-bold text-xl">AppName</span>
+              <img src="/logo-lhu.png" alt="Logo" className="h-10 w-auto mr-2" />
             </Link>
+          </div>
 
-            {/* Desktop Navigation Links */}
-            <div className="hidden md:ml-6 md:flex md:items-center md:space-x-4">
-              <Link
-                to="/"
-                className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 transition duration-150"
-              >
-                Home
-              </Link>
-              <Link
-                to="/features"
-                className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 transition duration-150"
-              >
-                Features
-              </Link>
-              <Link
-                to="/about"
-                className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 transition duration-150"
-              >
-                About
-              </Link>
-              <Link
-                to="/contact"
-                className="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 transition duration-150"
-              >
-                Contact
-              </Link>
-            </div>
+          {/* Desktop Navigation Links */}
+          <div className="hidden md:flex md:items-center md:space-x-1">
+            <Link
+              to="/"
+              className={`px-3 py-2 rounded-md text-sm font-medium hover:bg-primary/10 transition duration-150 ${isActive("/")}`}
+            >
+              Trang chủ
+            </Link>
+            <Link
+              to="/publications"
+              className={`px-3 py-2 rounded-md text-sm font-medium hover:bg-primary/10 transition duration-150 ${isActive("/publications")}`}
+            >
+              Ấn phẩm
+            </Link>
+            <Link
+              to="/post-article"
+              className={`px-3 py-2 rounded-md text-sm font-medium hover:bg-primary/10 transition duration-150 ${isActive("/guidelines")}`}
+            >
+              Gửi bài
+            </Link>
+            <Link
+              to="/guidelines"
+              className={`px-3 py-2 rounded-md text-sm font-medium hover:bg-primary/10 transition duration-150 ${isActive("/guidelines")}`}
+            >
+              Hướng dẫn
+            </Link>
+            <Link
+              to="/contact"
+              className={`px-3 py-2 rounded-md text-sm font-medium hover:bg-primary/10 transition duration-150 ${isActive("/contact")}`}
+            >
+              Liên hệ
+            </Link>
+            <button
+              className="px-3 py-2 rounded-md text-sm font-medium hover:bg-primary/10 transition duration-150 flex items-center"
+              onClick={() => navigate("/search")}
+            >
+              Tìm kiếm
+            </button>
           </div>
 
           {/* Desktop Authentication Controls */}
-          <div className="hidden md:flex md:items-center md:space-x-4">
+          <div className="hidden md:flex md:items-center md:space-x-2">
             {isAuthenticated ? (
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={toggleProfileMenu}
-                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700 transition duration-150"
+                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium hover:bg-primary/10 transition duration-150"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
                     {user?.avatarUrl ? (
                       <img
                         src={user.avatarUrl || "/placeholder.svg"}
@@ -118,10 +173,10 @@ const Navbar = () => {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <User size={16} />
+                      <User size={16} className="text-primary" />
                     )}
                   </div>
-                  <span>{user?.name || user?.username}</span>
+                  <span className="max-w-[100px] truncate">{user?.name || user?.username}</span>
                   <ChevronDown size={16} />
                 </button>
 
@@ -133,28 +188,49 @@ const Navbar = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-md shadow-lg py-1 z-10"
+                      className="absolute right-0 mt-2 w-56 bg-background rounded-md shadow-lg py-1 z-10 border"
                     >
+                      <div className="px-4 py-2 border-b">
+                        <p className="text-sm font-medium">{user?.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                      </div>
+
                       <Link
                         to="/profile"
-                        className="px-4 py-2 text-sm hover:bg-gray-600 transition duration-150 flex items-center"
+                        className="px-4 py-2 text-sm hover:bg-primary/10 transition duration-150 flex items-center"
                       >
                         <User size={16} className="mr-2" />
-                        Profile
+                        Thông tin tài khoản
                       </Link>
-                      <Link
-                        to="/settings"
-                        className="px-4 py-2 text-sm hover:bg-gray-600 transition duration-150 flex items-center"
-                      >
-                        <Settings size={16} className="mr-2" />
-                        Settings
-                      </Link>
+
+                      {(isAdmin || isEditor || isReviewer) && (
+                        <Link
+                          to="/manage"
+                          className="px-4 py-2 text-sm hover:bg-primary/10 transition duration-150 flex items-center"
+                        >
+                          <Settings size={16} className="mr-2" />
+                          Quản lý
+                        </Link>
+                      )}
+
+                      {isAuthor && (
+                        <Link
+                          to="/my-articles"
+                          className="px-4 py-2 text-sm hover:bg-primary/10 transition duration-150 flex items-center"
+                        >
+                          <FileText size={16} className="mr-2" />
+                          Bài báo của tôi
+                        </Link>
+                      )}
+
+                      <div className="border-t mt-1"></div>
+
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-600 transition duration-150 flex items-center"
+                        className="w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10 transition duration-150 flex items-center"
                       >
                         <LogOut size={16} className="mr-2" />
-                        Logout
+                        Đăng xuất
                       </button>
                     </motion.div>
                   )}
@@ -164,15 +240,15 @@ const Navbar = () => {
               <>
                 <Link
                   to="/login"
-                  className="px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-700 transition duration-150"
+                  className="px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/10 transition duration-150"
                 >
-                  Login
+                  Đăng nhập
                 </Link>
                 <Link
-                  to="/register"
-                  className="px-4 py-2 rounded-md text-sm font-medium bg-green-600 hover:bg-green-700 transition duration-150"
+                  to="/signup"
+                  className="px-4 py-2 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition duration-150"
                 >
-                  Register
+                  Đăng ký
                 </Link>
               </>
             )}
@@ -182,7 +258,7 @@ const Navbar = () => {
           <div className="flex items-center md:hidden">
             <button
               onClick={toggleMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none"
+              className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-primary/10 focus:outline-none"
               aria-expanded="false"
             >
               <span className="sr-only">Open main menu</span>
@@ -197,53 +273,61 @@ const Navbar = () => {
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
+            animate={{ opacity: 1, height: "100vh" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
-            className="md:hidden bg-gray-800"
+            className="md:hidden fixed inset-0 top-16 z-40 bg-background border-t overflow-y-auto"
           >
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
               <Link
                 to="/"
-                className="px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition duration-150 flex items-center"
+                className={`px-3 py-2 rounded-md text-base font-medium hover:bg-primary/10 transition duration-150 flex items-center ${isActive("/")}`}
                 onClick={closeMenu}
               >
                 <Home size={18} className="mr-2" />
-                Home
+                Trang chủ
               </Link>
               <Link
-                to="/features"
-                className="px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition duration-150 flex items-center"
+                to="/publications"
+                className={`px-3 py-2 rounded-md text-base font-medium hover:bg-primary/10 transition duration-150 flex items-center ${isActive("/publications")}`}
                 onClick={closeMenu}
               >
                 <BookOpen size={18} className="mr-2" />
-                Features
-              </Link>
-              <Link
-                to="/about"
-                className="px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition duration-150 flex items-center"
-                onClick={closeMenu}
-              >
-                <MessageSquare size={18} className="mr-2" />
-                About
+                Ấn phẩm
               </Link>
               <Link
                 to="/contact"
-                className="px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition duration-150 flex items-center"
+                className={`px-3 py-2 rounded-md text-base font-medium hover:bg-primary/10 transition duration-150 flex items-center ${isActive("/contact")}`}
                 onClick={closeMenu}
               >
                 <MessageSquare size={18} className="mr-2" />
-                Contact
+                Liên hệ
+              </Link>
+              <Link
+                to="/guidelines"
+                className={`px-3 py-2 rounded-md text-base font-medium hover:bg-primary/10 transition duration-150 flex items-center ${isActive("/guidelines")}`}
+                onClick={closeMenu}
+              >
+                <HelpCircle size={18} className="mr-2" />
+                Hướng dẫn
+              </Link>
+              <Link
+                to="/search"
+                className={`px-3 py-2 rounded-md text-base font-medium hover:bg-primary/10 transition duration-150 flex items-center ${isActive("/search")}`}
+                onClick={closeMenu}
+              >
+                <Search size={18} className="mr-2" />
+                Tìm kiếm
               </Link>
             </div>
 
             {/* Mobile Authentication Controls */}
-            <div className="pt-4 pb-3 border-t border-gray-700">
+            <div className="pt-4 pb-3 border-t">
               {isAuthenticated ? (
                 <div className="px-2 space-y-1">
                   <div className="flex items-center px-3 py-2">
                     <div className="flex-shrink-0">
-                      <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center overflow-hidden">
+                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
                         {user?.avatarUrl ? (
                           <img
                             src={user.avatarUrl || "/placeholder.svg"}
@@ -251,57 +335,69 @@ const Navbar = () => {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <User size={20} />
+                          <User size={20} className="text-primary" />
                         )}
                       </div>
                     </div>
                     <div className="ml-3">
                       <div className="text-base font-medium">{user?.name}</div>
-                      <div className="text-sm text-gray-400">{user?.email}</div>
+                      <div className="text-sm text-muted-foreground truncate max-w-[200px]">{user?.email}</div>
                     </div>
                   </div>
                   <Link
                     to="/profile"
-                    className="px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition duration-150 flex items-center"
+                    className="px-3 py-2 rounded-md text-base font-medium hover:bg-primary/10 transition duration-150 flex items-center"
                     onClick={closeMenu}
                   >
                     <User size={18} className="mr-2" />
-                    Profile
+                    Thông tin tài khoản
                   </Link>
-                  <Link
-                    to="/settings"
-                    className="px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition duration-150 flex items-center"
-                    onClick={closeMenu}
-                  >
-                    <Settings size={18} className="mr-2" />
-                    Settings
-                  </Link>
+                  {(isAdmin || isEditor || isReviewer) && (
+                    <Link
+                      to="/manage"
+                      className="px-3 py-2 rounded-md text-base font-medium hover:bg-primary/10 transition duration-150 flex items-center"
+                      onClick={closeMenu}
+                    >
+                      <Settings size={18} className="mr-2" />
+                      Quản lý
+                    </Link>
+                  )}
+                  {isAuthor && (
+                    <Link
+                      to="/my-articles"
+                      className="px-3 py-2 rounded-md text-base font-medium hover:bg-primary/10 transition duration-150 flex items-center"
+                      onClick={closeMenu}
+                    >
+                      <FileText size={18} className="mr-2" />
+                      Bài báo của tôi
+                    </Link>
+                  )}
                   <button
                     onClick={() => {
                       handleLogout()
                       closeMenu()
                     }}
-                    className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-400 hover:bg-gray-700 transition duration-150 flex items-center"
+                    className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-destructive hover:bg-destructive/10 transition duration-150 flex items-center"
                   >
                     <LogOut size={18} className="mr-2" />
-                    Logout
+                    Đăng xuất
                   </button>
                 </div>
               ) : (
-                <div className="px-2 space-y-1">
+                <div className="px-2 space-y-2">
                   <Link
                     to="/login"
-                    className="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-700 transition duration-150"
+                    className="block px-3 py-2 rounded-md text-base font-medium hover:bg-primary/10 transition duration-150"
                     onClick={closeMenu}
                   >
-                    Login
+                    Đăng nhập
                   </Link>
                   <Link
-                    to="/register"
-                    className="block px-3 py-2 rounded-md text-base font-medium bg-green-600 hover:bg-green-700 transition duration-150 mt-2"
+                    to="/signup"
+                    className="block px-3 py-2 rounded-md text-base font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition duration-150 text-center"
                     onClick={closeMenu}
                   >
-                    Register
+                    Đăng ký
                   </Link>
                 </div>
               )}
@@ -313,4 +409,4 @@ const Navbar = () => {
   )
 }
 
-export default Navbar
+export default NavBar

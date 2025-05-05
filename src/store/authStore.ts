@@ -88,6 +88,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         user: response.data.user,
         error: null,
         isLoading: false,
+        isCheckingAuth: false,
       });
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
@@ -100,7 +101,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       await axios.post(`${API_URL}/logout`);
-      set({ user: null, isAuthenticated: false, error: null, isLoading: false });
+      set({ 
+        user: null, 
+        isAuthenticated: false, 
+        error: null, 
+        isLoading: false 
+      });
     } catch (error) {
       set({ error: "Error logging out", isLoading: false });
       throw error;
@@ -111,7 +117,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await axios.post<{ user: User; message: string }>(`${API_URL}/verify-email`, { code });
-      set({ user: response.data.user, isAuthenticated: true, isLoading: false });
+      set({ 
+        user: response.data.user, 
+        isAuthenticated: true, 
+        isLoading: false,
+        isCheckingAuth: false,
+      });
       return { message: response.data.message };
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
@@ -142,9 +153,17 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isCheckingAuth: true, error: null });
     try {
       const response = await axios.get<{ user: User }>(`${API_URL}/check`);
-      set({ user: response.data.user, isAuthenticated: true, isCheckingAuth: false });
+      set({ 
+        user: response.data.user, 
+        isAuthenticated: true, 
+        isCheckingAuth: false 
+      });
     } catch (error) {
-      set({ error: null, isCheckingAuth: false, isAuthenticated: false });
+      set({ 
+        error: null, 
+        isCheckingAuth: false, 
+        isAuthenticated: false 
+      });
     }
   },
 

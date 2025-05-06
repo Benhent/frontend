@@ -1,29 +1,20 @@
-import { v2 as cloudinary } from 'cloudinary';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-cloudinary.config({
-  cloud_name: process.env.REACT_APP_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.REACT_APP_CLOUDINARY_API_KEY,
-  api_secret: process.env.REACT_APP_CLOUDINARY_API_SECRET,
-  secure: true
-});
-
-export const uploadToCloudinary = async (file: File): Promise<string> => {
+export const uploadAvatarToCloudinary = async (file: File): Promise<string> => {
   try {
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_AVATAR_PRESET;
+
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || '');
+    formData.append('upload_preset', uploadPreset);
 
     const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
       {
         method: 'POST',
         body: formData,
       }
     );
-
+    console.log('cloudName:', cloudName, 'uploadPreset:', uploadPreset);
     const data = await response.json();
     return data.secure_url;
   } catch (error) {

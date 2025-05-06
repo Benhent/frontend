@@ -218,8 +218,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       throw error;
     }
   },
-
-  // getProfile: async () => {
   //   set({ isLoading: true, error: null })
   //   try {
   //     const response = await axios.get<{ success: boolean; user: User }>(`http://localhost:5000/api/profile`);
@@ -245,21 +243,19 @@ export const useAuthStore = create<AuthState>((set) => ({
   //   }
   // },
 
-  updateProfile: async (name, username, link, national, avatarFile) => {
+  updateProfile: async (name, username, link, national, avatarUrl) => {
     set({ isLoading: true, error: null });
     try {
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("username", username);
-      formData.append("link", link);
-      formData.append("national", national);
-      if (avatarFile) {
-        formData.append("avatar", avatarFile);
-      }
-
-      const response = await axios.put<{ success: boolean; user: User; message: string }>(`http://localhost:5000/api/profile/update-profile`, formData, {
+      const response = await axios.put<{ success: boolean; user: User; message: string }>(`http://localhost:5000/api/profile/update-profile`, 
+        {
+          name,
+          username,
+          link,
+          national,
+          avatarUrl
+        }, {
         headers: {
-          "Content-Type": "multipart/form-data",
+          "Content-Type": "application/json",
         },
       });
 

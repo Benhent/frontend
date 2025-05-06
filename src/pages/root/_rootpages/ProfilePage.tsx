@@ -3,6 +3,7 @@ import { useAuthStore } from "../../../store/authStore"
 import { User, Camera, Save, RefreshCw } from "lucide-react"
 import LoadingSpinner from "../../../components/LoadingSpinner"
 import { toast } from "react-hot-toast"
+import { uploadAvatarToCloudinary } from "../../../config/cloudinary"
 
 const ProfilePage = () => {
   const { user, updateProfile, isLoading, error, message } = useAuthStore()
@@ -70,16 +71,30 @@ const ProfilePage = () => {
     setIsSubmitLoading(true)
 
     try {
-      await updateProfile(
-        formData.name,
-        formData.username,
-        formData.link,
-        formData.national,
-        avatar // Sử dụng avatar state đã lưu trữ file
-      )
+      let avatarUrl = user?.avatarUrl || ""
+
+      // Jika ada file avatar baru, upload ke Cloudinary
+      if (avatar) {
+        try {
+          toast.loading("Uploading image...")
+          avatarUrl = await uploadAvatarToCloudinary(avatar)
+          toast.dismiss()
+          toast.success("Image uploaded successfully")
+        } catch (uploadError) {
+          toast.dismiss()
+          toast.error("Failed to upload image")
+          console.error("Upload error:", uploadError)
+          setIsSubmitLoading(false)
+          return
+        }
+      }
+
+      // Kirim data profil dengan URL avatar ke backend
+      await updateProfile(formData.name, formData.username, formData.link, formData.national, avatarUrl)
+
       toast.success("Profile updated successfully")
     } catch (err) {
-      console.error("Error updating profile:", err)
+      console.error("Update profile error:", err)
       toast.error("Failed to update profile")
     } finally {
       setIsSubmitLoading(false)
@@ -110,7 +125,7 @@ const ProfilePage = () => {
     <div className="w-full max-w-md mx-auto">
       <div className="shadow-lg rounded-lg px-8 pt-6 pb-8 mb-4">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-white text-center">Update Your Profile</h2>
+          <h2 className="text-2xl font-bold text-center">Update Your Profile</h2>
           <button
             onClick={handleRefresh}
             className="text-gray-300 hover:text-white"
@@ -129,12 +144,12 @@ const ProfilePage = () => {
             >
               {avatarPreview ? (
                 <img
-                  src={avatarPreview}
+                  src={avatarPreview || "/placeholder.svg"}
                   alt="Avatar"
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     // Fallback if image fails to load
-                    e.currentTarget.src = user?.avatarUrl || ""
+                    e.currentTarget.src = user?.avatarUrl || "/placeholder.svg"
                     e.currentTarget.onerror = null // Prevent infinite loop
                   }}
                 />
@@ -149,13 +164,13 @@ const ProfilePage = () => {
             >
               <Camera size={16} className="text-white" />
             </div>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleAvatarChange} 
-              className="hidden" 
-              accept="image/*" 
-              aria-label="Upload avatar" 
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleAvatarChange}
+              className="hidden"
+              accept="image/*"
+              aria-label="Upload avatar"
             />
           </div>
         </div>
@@ -170,7 +185,7 @@ const ProfilePage = () => {
               id="name"
               name="name"
               type="text"
-              placeholder= {user?.name}
+              placeholder={user?.name}
               value={formData.name}
               onChange={handleChange}
               required
@@ -187,7 +202,7 @@ const ProfilePage = () => {
               id="username"
               name="username"
               type="text"
-              placeholder= {user?.username}
+              placeholder={user?.username}
               value={formData.username}
               onChange={handleChange}
               required
@@ -204,7 +219,7 @@ const ProfilePage = () => {
               id="link"
               name="link"
               type="url"
-              placeholder= {user?.link}
+              placeholder={user?.link}
               value={formData.link}
               onChange={handleChange}
               disabled={isSubmitLoading}
@@ -220,7 +235,7 @@ const ProfilePage = () => {
               id="national"
               name="national"
               type="text"
-              placeholder= {user?.national}
+              placeholder={user?.national}
               value={formData.national}
               onChange={handleChange}
               disabled={isSubmitLoading}
@@ -229,7 +244,7 @@ const ProfilePage = () => {
 
           <div className="flex items-center justify-between">
             <button
-              className={`bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full flex items-center justify-center ${(isLoading || isSubmitLoading) ? "opacity-70 cursor-not-allowed" : ""}`}
+              className={`bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full flex items-center justify-center ${isLoading || isSubmitLoading ? "opacity-70 cursor-not-allowed" : ""}`}
               type="submit"
               disabled={isLoading || isSubmitLoading}
             >

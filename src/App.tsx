@@ -15,10 +15,17 @@ import VerifyEmailPage from "./pages/auth/_authpages/VerifyEmailPage";
 
 
 import Dashboard from "./pages/root/_rootpages/Dashboard";
+import Guide from "./pages/root/_rootpages/Guide";
+import Contact from "./pages/root/_rootpages/Contact";
+
 import ProfilePage from "./pages/root/_rootpages/ProfilePage";
 import Security from "./pages/root/_rootpages/Security";
+import PostArticle from "./pages/root/_rootpages/Postarticle";
+
+
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
+// import TestPage from "./pages/root/_rootpages/test";
 
 const App: React.FC = () => {
   const { isCheckingAuth, checkAuth } = useAuthStore();
@@ -39,11 +46,17 @@ const App: React.FC = () => {
       {!isPrivateRoute && <NavBar />}
       <main className={`flex-1 flex items-center justify-center ${!isPrivateRoute ? 'pt-16' : ''}`}>
         <Routes>
+
+          {/* <Route path='/test' element={<TestPage />} /> */}
           {/* public routes */}
           {/* <Route element={<ProtectedRoute/>}> */}
             <Route path='/' element={<Dashboard />}/>
-            <Route path='/profile' element={<ProfilePage />}/>
+            <Route path='/guide' element={<Guide />}/>
+            <Route path='/contact' element={<Contact />}/>
+            
             <Route path='/security' element={<Security />}/>
+            <Route path='/profile' element={<ProfilePage />}/>
+            {/* <Route path='/post-article' element={<PostArticle />}/> */}
           {/* </Route> */}
 
           {/* private routes */}

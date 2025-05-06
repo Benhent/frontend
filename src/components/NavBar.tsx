@@ -138,8 +138,8 @@ const NavBar = () => {
               Gửi bài
             </Link>
             <Link
-              to="/guidelines"
-              className={`px-3 py-2 rounded-md text-sm font-medium hover:bg-primary/10 transition duration-150 ${isActive("/guidelines")}`}
+              to="/guide"
+              className={`px-3 py-2 rounded-md text-sm font-medium hover:bg-primary/10 transition duration-150 ${isActive("/guide")}`}
             >
               Hướng dẫn
             </Link>

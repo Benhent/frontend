@@ -4,7 +4,7 @@ import useAuthStore from "../../store/authStore";
 export const RedirectAuthenticatedUser: React.FC = () => {
     const { user } = useAuthStore();
   
-    if (user && user.isVerified) {
+    if (user && user.isVerified && user.role === 'admin') {
       return <Navigate to='/' replace />;
     }
   

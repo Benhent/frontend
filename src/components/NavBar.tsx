@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { useAuthStore } from "../store/authStore"
@@ -126,8 +124,8 @@ const NavBar = () => {
               Trang chủ
             </Link>
             <Link
-              to="/publications"
-              className={`px-3 py-2 rounded-md text-sm font-medium hover:bg-primary/10 transition duration-150 ${isActive("/publications")}`}
+              to="/article"
+              className={`px-3 py-2 rounded-md text-sm font-medium hover:bg-primary/10 transition duration-150 ${isActive("/article")}`}
             >
               Ấn phẩm
             </Link>
@@ -205,7 +203,7 @@ const NavBar = () => {
 
                       {(isAdmin || isEditor || isReviewer) && (
                         <Link
-                          to="/manage"
+                          to="/admin/articles"
                           className="px-4 py-2 text-sm hover:bg-primary/10 transition duration-150 flex items-center"
                         >
                           <Settings size={16} className="mr-2" />

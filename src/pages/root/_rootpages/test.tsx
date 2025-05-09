@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { uploadToCloudinary } from '../../../config/cloudinary';
+import { uploadAvatarToCloudinary } from '../../../config/cloudinary';
 
 const TestPage: React.FC = () => {
   const [imageUrl, setImageUrl] = useState<string>('');
@@ -11,7 +11,7 @@ const TestPage: React.FC = () => {
 
     try {
       setLoading(true);
-      const url = await uploadToCloudinary(file);
+      const url = await uploadAvatarToCloudinary(file);
       setImageUrl(url);
       console.log('Uploaded image URL:', url);
       alert('Image uploaded successfully');

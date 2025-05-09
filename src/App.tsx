@@ -3,9 +3,10 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
-import {ProtectedRoute} from "./pages/root/rootLayout";
-import {RedirectAuthenticatedUser} from "./pages/auth/authLayout";
-import LoadingSpinner from "./components/LoadingSpinner";
+// import {ProtectedRoute} from "./pages/root/rootLayout";
+// import {RedirectAuthenticatedUser} from "./pages/auth/authLayout";
+import AdminLayout from "./pages/Admin/adminLayout";
+import AdminProtectedRoute from "./components/AdminProtectedRoute";
 
 import RegisterPage from "./pages/auth/_authpages/RegisterPage";
 import LoginPage from "./pages/auth/_authpages/LoginPage";
@@ -13,18 +14,22 @@ import ForgotPasswordPage from "./pages/auth/_authpages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/auth/_authpages/ResetPasswordPage";
 import VerifyEmailPage from "./pages/auth/_authpages/VerifyEmailPage";
 
-
 import Dashboard from "./pages/root/_rootpages/Dashboard";
+import Article from "./pages/root/_rootpages/Article";
 import Guide from "./pages/root/_rootpages/Guide";
 import Contact from "./pages/root/_rootpages/Contact";
 
-import ProfilePage from "./pages/root/_rootpages/ProfilePage";
+import ProfilePage from "./pages/root/_rootpages/Profile";
 import Security from "./pages/root/_rootpages/Security";
 import PostArticle from "./pages/root/_rootpages/Postarticle";
-
+import ArticleManage from "./pages/Admin/_adminpages/articleManage";
 
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
+import LoadingSpinner from "./components/LoadingSpinner";
+import ArticleCreate from "./pages/Admin/_adminpages/partial/article/articleCreate";
+import ArticleDetail from "./pages/Admin/_adminpages/partial/article/articleDetail";
+import ArticleEdit from "./pages/Admin/_adminpages/partial/article/articleEdit";
 // import TestPage from "./pages/root/_rootpages/test";
 
 const App: React.FC = () => {
@@ -40,41 +45,48 @@ const App: React.FC = () => {
   // Danh sách các private routes
   const privateRoutes = ['/login', '/signup', '/forgot-password', '/reset-password'];
   const isPrivateRoute = privateRoutes.some(route => location.pathname.startsWith(route));
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   return (
     <div className="min-h-screen flex flex-col">
-      {!isPrivateRoute && <NavBar />}
-      <main className={`flex-1 flex items-center justify-center ${!isPrivateRoute ? 'pt-16' : ''}`}>
+      {!isPrivateRoute && !isAdminRoute && <NavBar />}
+      <main className={`flex-1 ${!isPrivateRoute && !isAdminRoute ? 'pt-16' : ''}`}>
         <Routes>
 
           {/* <Route path='/test' element={<TestPage />} /> */}
+
           {/* public routes */}
-          {/* <Route element={<ProtectedRoute/>}> */}
-            <Route path='/' element={<Dashboard />}/>
-            <Route path='/guide' element={<Guide />}/>
-            <Route path='/contact' element={<Contact />}/>
-            
-            <Route path='/security' element={<Security />}/>
-            <Route path='/profile' element={<ProfilePage />}/>
-            {/* <Route path='/post-article' element={<PostArticle />}/> */}
-          {/* </Route> */}
+          <Route path='/' element={<Dashboard />}/>
+          <Route path='/article' element={<Article />}/>
+          <Route path='/guide' element={<Guide />}/>
+          <Route path='/contact' element={<Contact />}/>
+          <Route path='/security' element={<Security />}/>
+          <Route path='/profile' element={<ProfilePage />}/>
+          <Route path='/post-article' element={<PostArticle />}/>
 
-          {/* private routes */}
-          {/* <Route element={<RedirectAuthenticatedUser/>}> */}
-            <Route path='/signup' element={<RegisterPage/>}/>
-            <Route path='/login' element={<LoginPage />}/>
-            <Route path='/forgot-password' element={<ForgotPasswordPage />}/>
-            <Route path='/reset-password/:token' element={<ResetPasswordPage />}/>
-          {/* </Route> */}
-          
-          {/* email verify */}
-          <Route path='/verify-email' element={<VerifyEmailPage />} />
+          {/* admin routes */}
+          <Route element={<AdminProtectedRoute><AdminLayout /></AdminProtectedRoute>}>
+            <Route path='/admin/articles' element={<ArticleManage />}/>
+            <Route path='/admin/articles/create' element={<ArticleCreate />}/>
+            <Route path='/admin/articles/:id' element={<ArticleDetail />}/>
+            <Route path='/admin/articles/:id/edit' element={<ArticleEdit />}/>
+          </Route>
 
+          {/* auth routes */}
+          <Route path='/signup' element={<div className="flex items-center justify-center min-h-screen"><RegisterPage/></div>}/>
+          <Route path='/login' element={<div className="flex items-center justify-center min-h-screen"><LoginPage /></div>}/>
+          <Route path='/forgot-password' element={<div className="flex items-center justify-center min-h-screen"><ForgotPasswordPage /></div>}/>
+          <Route path='/reset-password/:token' element={<div className="flex items-center justify-center min-h-screen"><ResetPasswordPage /></div>}/>
+          <Route path='/verify-email' element={<div className="flex items-center justify-center min-h-screen"><VerifyEmailPage /></div>} />
+
+          {/* <Route element={<RedirectAuthenticatedUser/>}>
+            <Route 
+          </Route> */}
           {/* catch all routes */}
           <Route path='*' element={<Navigate to='/' replace />} />
         </Routes>
       </main>
-      {!isPrivateRoute && <Footer />}
+      {!isPrivateRoute && !isAdminRoute && <Footer />}
       <Toaster />
     </div>
   );

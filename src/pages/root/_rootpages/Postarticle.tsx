@@ -1,439 +1,383 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import useArticleStore from '../../../store/articleStore';
-import { toast } from 'react-hot-toast';
-import { Upload, FileText, X, Save } from 'lucide-react';
-import { useDropzone } from 'react-dropzone';
-import { Progress } from '../../../components/ui/progress';
+import React, { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import useArticleStore from "../../../store/articleStore"
+import useUIStore from "../../../store/uiStore"
+import useFieldStore from "../../../store/fieldStore"
+import useAuthStore from "../../../store/authStore"
+import { Button } from "../../../components/ui/button"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../../../components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../../../components/ui/dialog"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "../../../components/ui/pagination"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs"
+import { Badge } from "../../../components/ui/badge"
+import { Separator } from "../../../components/ui/separator"
+import { Alert, AlertDescription, AlertTitle } from "../../../components/ui/alert"
+import { FileText, Plus, Clock, CheckCircle, XCircle, AlertCircle, FileUp, Calendar, LogIn } from 'lucide-react'
+import LoadingSpinner from "../../../components/LoadingSpinner"
+import type { Article } from "../../../types/article"
 
-interface Author {
-  fullName: string;
-  email: string;
-  institution: string;
-  country: string;
-  isCorresponding: boolean;
-  orcid?: string;
+// Status badge colors
+const STATUS_COLORS = {
+  draft: "bg-gray-100 text-gray-800",
+  submitted: "bg-blue-100 text-blue-800",
+  under_review: "bg-yellow-100 text-yellow-800",
+  accepted: "bg-green-100 text-green-800",
+  rejected: "bg-red-100 text-red-800",
+  published: "bg-purple-100 text-purple-800",
+  revisions_required: "bg-orange-100 text-orange-800",
 }
 
-interface DraftData {
-  title: string;
-  abstract: string;
-  keywords: string;
-  articleLanguage: string;
-  authors: Author[];
-  file?: File;
+// Status display names
+const STATUS_NAMES = {
+  draft: "Bản nháp",
+  submitted: "Đã gửi",
+  under_review: "Đang xét duyệt",
+  accepted: "Đã chấp nhận",
+  rejected: "Từ chối",
+  published: "Đã xuất bản",
+  revisions_required: "Yêu cầu chỉnh sửa",
 }
 
-const Postarticle = () => {
-  const navigate = useNavigate();
-  const { createArticle, loading } = useArticleStore();
+// Status icons
+const STATUS_ICONS = {
+  draft: <FileText className="h-4 w-4" />,
+  submitted: <FileUp className="h-4 w-4" />,
+  under_review: <Clock className="h-4 w-4" />,
+  accepted: <CheckCircle className="h-4 w-4" />,
+  rejected: <XCircle className="h-4 w-4" />,
+  published: <CheckCircle className="h-4 w-4" />,
+  revisions_required: <AlertCircle className="h-4 w-4" />,
+}
 
-  const [title, setTitle] = useState('');
-  const [abstract, setAbstract] = useState('');
-  const [keywords, setKeywords] = useState('');
-  const [articleLanguage, setArticleLanguage] = useState('en');
-  const [authors, setAuthors] = useState<Author[]>([
-    {
-      fullName: '',
-      email: '',
-      institution: '',
-      country: '',
-      isCorresponding: true
-    }
-  ]);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isDraft, setIsDraft] = useState(false);
-  const [lastSaved, setLastSaved] = useState<string | null>(null);
+const PostArticle = () => {
+  const navigate = useNavigate()
+  const { articles, pagination, fetchArticles } = useArticleStore()
+  const { loading } = useUIStore()
+  const { fetchFields } = useFieldStore()
+  const { isAuthenticated, user } = useAuthStore()
+  
+  const [page, setPage] = useState(1)
+  const [activeTab, setActiveTab] = useState("all")
+  
+  const ITEMS_PER_PAGE = 6
 
-  // Load draft from localStorage on component mount
+  // Fetch user's articles on component mount
   useEffect(() => {
-    const savedDraft = localStorage.getItem('articleDraft');
-    if (savedDraft) {
-      const draft: DraftData = JSON.parse(savedDraft);
-      setTitle(draft.title);
-      setAbstract(draft.abstract);
-      setKeywords(draft.keywords);
-      setArticleLanguage(draft.articleLanguage);
-      setAuthors(draft.authors);
-      setLastSaved(localStorage.getItem('articleDraftLastSaved'));
+    if (isAuthenticated) {
+      fetchArticles({ 
+        page, 
+        limit: ITEMS_PER_PAGE,
+        submitterId: user?._id
+      })
+      fetchFields({ isActive: true })
     }
-  }, []);
+  }, [fetchArticles, fetchFields, page, isAuthenticated, user])
 
-  // Auto-save draft every 30 seconds
-  useEffect(() => {
-    const autoSaveInterval = setInterval(() => {
-      if (title || abstract || keywords || authors.some(a => a.fullName)) {
-        saveDraft();
-      }
-    }, 30000);
+  // Handle pagination
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage)
+  }
 
-    return () => clearInterval(autoSaveInterval);
-  }, [title, abstract, keywords, authors]);
+  // Handle view article details
+  const handleViewArticle = (id: string) => {
+    navigate(`/articles/${id}`)
+  }
 
-  const saveDraft = () => {
-    const draft: DraftData = {
-      title,
-      abstract,
-      keywords,
-      articleLanguage,
-      authors
-    };
-    localStorage.setItem('articleDraft', JSON.stringify(draft));
-    const now = new Date().toLocaleString();
-    localStorage.setItem('articleDraftLastSaved', now);
-    setLastSaved(now);
-    toast.success('Đã lưu nháp');
-  };
+  // Handle create new article
+  const handleCreateArticle = () => {
+    navigate('/admin/articles/create')
+  }
 
-  const clearDraft = () => {
-    localStorage.removeItem('articleDraft');
-    localStorage.removeItem('articleDraftLastSaved');
-    setLastSaved(null);
-    setTitle('');
-    setAbstract('');
-    setKeywords('');
-    setArticleLanguage('en');
-    setAuthors([{
-      fullName: '',
-      email: '',
-      institution: '',
-      country: '',
-      isCorresponding: true
-    }]);
-    setSelectedFile(null);
-    toast.success('Đã xóa nháp');
-  };
+  // Filter articles based on active tab
+  const filteredArticles = React.useMemo(() => {
+    if (!Array.isArray(articles)) return []
+    
+    if (activeTab === "all") return articles
+    return articles.filter(article => article.status === activeTab)
+  }, [articles, activeTab])
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: {
-      'application/msword': ['.doc'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
-    },
-    maxSize: 10 * 1024 * 1024, // 10MB
-    multiple: false,
-    onDrop: (acceptedFiles) => {
-      if (acceptedFiles.length > 0) {
-        setSelectedFile(acceptedFiles[0]);
-      }
-    },
-    onDropRejected: (fileRejections) => {
-      fileRejections.forEach(({ file, errors }) => {
-        errors.forEach(err => {
-          if (err.code === 'file-too-large') {
-            toast.error('File quá lớn. Kích thước tối đa là 10MB');
-          } else if (err.code === 'file-invalid-type') {
-            toast.error('Chỉ chấp nhận file .doc hoặc .docx');
-          }
-        });
-      });
-    }
-  });
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A"
+    return new Date(dateString).toLocaleDateString('vi-VN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+  }
 
-  const handleAuthorChange = (index: number, field: keyof Author, value: string | boolean) => {
-    const newAuthors = [...authors];
-    newAuthors[index] = { ...newAuthors[index], [field]: value };
-    setAuthors(newAuthors);
-  };
-
-  const addAuthor = () => {
-    setAuthors([...authors, {
-      fullName: '',
-      email: '',
-      institution: '',
-      country: '',
-      isCorresponding: false
-    }]);
-  };
-
-  const removeAuthor = (index: number) => {
-    if (authors.length > 1) {
-      const newAuthors = authors.filter((_, i) => i !== index);
-      setAuthors(newAuthors);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setUploadProgress(0);
-
-    try {
-      if (!selectedFile) {
-        toast.error('Vui lòng chọn file bài viết');
-        return;
-      }
-
-      const articleData = {
-        title,
-        abstract,
-        keywords: keywords.split(',').map(k => k.trim()),
-        articleLanguage,
-        authors,
-        status: isDraft ? 'draft' : 'submitted'
-      };
-
-      // Simulate upload progress
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 500);
-
-      await createArticle(articleData, selectedFile);
-      
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-      
-      toast.success(isDraft ? 'Đã lưu nháp thành công' : 'Gửi bài viết thành công');
-      clearDraft();
-      navigate('/articles');
-    } catch (error) {
-      toast.error('Lỗi khi gửi bài viết');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Gửi bài viết mới</h1>
-        <div className="flex items-center space-x-4">
-          {lastSaved && (
-            <span className="text-sm text-gray-500">
-              Đã lưu lúc: {lastSaved}
-            </span>
-          )}
-          <button
-            onClick={saveDraft}
-            className="flex items-center space-x-2 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-          >
-            <Save size={20} />
-            <span>Lưu nháp</span>
-          </button>
-          {lastSaved && (
-            <button
-              onClick={clearDraft}
-              className="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              <X size={20} />
-              <span>Xóa nháp</span>
-            </button>
-          )}
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="max-w-2xl mx-auto text-center">
+          <div className="bg-gray-50 p-8 rounded-lg shadow-sm">
+            <LogIn className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+            <h2 className="text-2xl font-bold mb-4">Vui lòng đăng nhập</h2>
+            <p className="text-gray-600 mb-6">
+              Để quản lý và gửi bài báo, bạn cần đăng nhập vào hệ thống.
+            </p>
+            <div className="space-x-4">
+              <Button onClick={() => navigate('/login')}>
+                Đăng nhập
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/signup')}>
+                Đăng ký
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
-      
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Title */}
+    )
+  }
+
+  return (
+    <div className="container mx-auto py-8">
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <label className="block text-sm font-medium mb-2">Tiêu đề bài viết</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full p-2 border rounded"
-            required
-          />
+          <h1 className="text-3xl font-bold">Bài báo của tôi</h1>
+          <p className="text-gray-600 mt-1">Quản lý và theo dõi các bài báo bạn đã gửi</p>
         </div>
+        
+        <Button className="flex items-center gap-2" onClick={handleCreateArticle}>
+          <Plus className="h-4 w-4" />
+          Gửi bài báo mới
+        </Button>
+      </div>
 
-        {/* Abstract */}
-        <div>
-          <label className="block text-sm font-medium mb-2">Tóm tắt</label>
-          <textarea
-            value={abstract}
-            onChange={(e) => setAbstract(e.target.value)}
-            className="w-full p-2 border rounded h-32"
-            required
-          />
-        </div>
-
-        {/* Keywords */}
-        <div>
-          <label className="block text-sm font-medium mb-2">Từ khóa (phân cách bằng dấu phẩy)</label>
-          <input
-            type="text"
-            value={keywords}
-            onChange={(e) => setKeywords(e.target.value)}
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-
-        {/* Language */}
-        <div>
-          <label className="block text-sm font-medium mb-2">Ngôn ngữ bài viết</label>
-          <select
-            value={articleLanguage}
-            onChange={(e) => setArticleLanguage(e.target.value)}
-            className="w-full p-2 border rounded"
-          >
-            <option value="en">English</option>
-            <option value="vi">Tiếng Việt</option>
-          </select>
-        </div>
-
-        {/* Authors */}
-        <div>
-          <label className="block text-sm font-medium mb-2">Tác giả</label>
-          {authors.map((author, index) => (
-            <div key={index} className="mb-4 p-4 border rounded space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-medium">Tác giả {index + 1}</h3>
-                {authors.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeAuthor(index)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <X size={20} />
-                  </button>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm mb-1">Họ và tên</label>
-                  <input
-                    type="text"
-                    value={author.fullName}
-                    onChange={(e) => handleAuthorChange(index, 'fullName', e.target.value)}
-                    className="w-full p-2 border rounded"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm mb-1">Email</label>
-                  <input
-                    type="email"
-                    value={author.email}
-                    onChange={(e) => handleAuthorChange(index, 'email', e.target.value)}
-                    className="w-full p-2 border rounded"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm mb-1">Cơ quan</label>
-                  <input
-                    type="text"
-                    value={author.institution}
-                    onChange={(e) => handleAuthorChange(index, 'institution', e.target.value)}
-                    className="w-full p-2 border rounded"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm mb-1">Quốc gia</label>
-                  <input
-                    type="text"
-                    value={author.country}
-                    onChange={(e) => handleAuthorChange(index, 'country', e.target.value)}
-                    className="w-full p-2 border rounded"
-                    required
-                  />
-                </div>
-
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={author.isCorresponding}
-                    onChange={(e) => handleAuthorChange(index, 'isCorresponding', e.target.checked)}
-                    className="mr-2"
-                  />
-                  <label className="text-sm">Tác giả liên hệ</label>
-                </div>
-              </div>
+      {/* Tabs for filtering articles */}
+      <Tabs defaultValue="all" className="mb-6" onValueChange={setActiveTab}>
+        <TabsList className="grid grid-cols-4 md:grid-cols-7 mb-4">
+          <TabsTrigger value="all">Tất cả</TabsTrigger>
+          <TabsTrigger value="draft">Bản nháp</TabsTrigger>
+          <TabsTrigger value="submitted">Đã gửi</TabsTrigger>
+          <TabsTrigger value="under_review">Đang xét duyệt</TabsTrigger>
+          <TabsTrigger value="revisions_required">Cần chỉnh sửa</TabsTrigger>
+          <TabsTrigger value="accepted">Đã chấp nhận</TabsTrigger>
+          <TabsTrigger value="published">Đã xuất bản</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value={activeTab}>
+          {loading.articles ? (
+            <div className="flex justify-center py-12">
+              <LoadingSpinner />
             </div>
-          ))}
+          ) : filteredArticles.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredArticles.map((article: Article) => (
+                <Card key={article._id} className="overflow-hidden hover:shadow-md transition-shadow">
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <Badge className={STATUS_COLORS[article.status as keyof typeof STATUS_COLORS] || "bg-gray-100"}>
+                        <span className="flex items-center gap-1">
+                          {STATUS_ICONS[article.status as keyof typeof STATUS_ICONS] || <FileText className="h-4 w-4" />}
+                          {STATUS_NAMES[article.status as keyof typeof STATUS_NAMES] || article.status}
+                        </span>
+                      </Badge>
+                      <div className="flex items-center text-xs text-gray-500">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        {formatDate(article.createdAt)}
+                      </div>
+                    </div>
+                    <CardTitle className="text-lg mt-2 line-clamp-2">{article.title}</CardTitle>
+                  </CardHeader>
+                  
+                  <CardContent className="pb-2">
+                    <p className="text-sm text-gray-600 line-clamp-3">
+                      {article.abstract || "Không có tóm tắt"}
+                    </p>
+                    
+                    <div className="flex flex-wrap gap-1 mt-3">
+                      {Array.isArray(article.keywords) && article.keywords.slice(0, 3).map((keyword, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          {keyword}
+                        </Badge>
+                      ))}
+                      {Array.isArray(article.keywords) && article.keywords.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{article.keywords.length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                  </CardContent>
+                  
+                  <CardFooter className="pt-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => handleViewArticle(article._id)}
+                    >
+                      Xem chi tiết
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <FileText className="h-12 w-12 mx-auto text-gray-400" />
+              <p className="mt-4 text-lg font-medium text-gray-900">Không có bài báo nào</p>
+              <p className="mt-2 text-gray-500">
+                {activeTab === "all" 
+                  ? "Bạn chưa gửi bài báo nào. Hãy bắt đầu bằng cách nhấn nút \"Gửi bài báo mới\"."
+                  : `Bạn không có bài báo nào ở trạng thái "${STATUS_NAMES[activeTab as keyof typeof STATUS_NAMES] || activeTab}".`
+                }
+              </p>
+              <Button className="mt-4" onClick={handleCreateArticle}>
+                <Plus className="h-4 w-4 mr-2" />
+                Gửi bài báo mới
+              </Button>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
-          <button
-            type="button"
-            onClick={addAuthor}
-            className="mt-2 text-blue-500 hover:text-blue-700"
-          >
-            + Thêm tác giả
-          </button>
+      {/* Pagination */}
+      {pagination && pagination.pages > 1 && (
+        <div className="flex justify-center mt-8">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => handlePageChange(Math.max(1, page - 1))}
+                  className={page <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              
+              {Array.from({ length: pagination.pages }).map((_, idx) => (
+                <PaginationItem key={idx}>
+                  <PaginationLink
+                    isActive={page === idx + 1}
+                    onClick={() => handlePageChange(idx + 1)}
+                    className="cursor-pointer"
+                  >
+                    {idx + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => handlePageChange(Math.min(pagination.pages, page + 1))}
+                  className={page >= pagination.pages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
+      )}
 
-        {/* File Upload */}
-        <div>
-          <label className="block text-sm font-medium mb-2">File bài viết (.doc, .docx)</label>
-          <div
-            {...getRootProps()}
-            className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer ${
-              isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-            }`}
-          >
-            <input {...getInputProps()} />
-            {selectedFile ? (
-              <div className="flex items-center justify-center space-x-2">
-                <FileText size={20} />
-                <span>{selectedFile.name}</span>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedFile(null);
-                  }}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Upload size={24} className="mx-auto" />
-                <p className="text-sm text-gray-600">
-                  {isDragActive
-                    ? 'Thả file vào đây...'
-                    : 'Kéo thả file vào đây hoặc click để chọn file'}
-                </p>
-                <p className="text-xs text-gray-500">Chỉ chấp nhận file .doc, .docx (tối đa 10MB)</p>
-              </div>
-            )}
+      {/* Submission Guidelines */}
+      <div className="mt-12">
+        <h2 className="text-2xl font-bold mb-4">Quy định gửi bài</h2>
+        <Separator className="mb-6" />
+        
+        <div className="bg-gray-50 p-6 rounded-lg">
+          <h3 className="text-lg font-semibold mb-4">Checklist cho các bài chuẩn bị gửi</h3>
+          <p className="mb-4 text-gray-700">
+            Là một phần của quy trình gửi, các tác giả được yêu cầu kiểm tra sự tuân thủ của họ đối với tất cả các mục sau đây và các bài gửi có thể được trả lại cho các tác giả không tuân thủ các mục này.
+          </p>
+          
+          <div className="space-y-3">
+            <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertTitle>Tính nguyên bản</AlertTitle>
+              <AlertDescription>
+                Bài viết là công trình gốc chưa được xuất bản ở bất kì Tạp chí nào kể cả Hội thảo quốc tế có yêu cầu ký copyright
+              </AlertDescription>
+            </Alert>
+            
+            <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertTitle>Tiêu đề</AlertTitle>
+              <AlertDescription>
+                Tên bài viết không nên vượt quá 20 từ
+              </AlertDescription>
+            </Alert>
+            
+            <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertTitle>Định dạng</AlertTitle>
+              <AlertDescription>
+                Bài báo phải được trình bày trên khổ A4 theo chiều dọc, với các thông số PageSetup cụ thể như sau: Top: 3 cm, Bottom: 2 cm, Left: 3,0 cm, Right: 2 cm, Header: 1cm, Footer: 1,2 cm. Nội dung bài báo gõ bằng font chữ Times New Roman, cỡ 11, không dãn hay co cỡ chữ; chế độ dãn dòng: Single, khoảng trống dòng: before: 0, after: 3pt; căn lề justified. Khoảng thụt đầu dòng của đoạn văn là 0,5 cm. Tiêu đề các phần không thụt đầu dòng. Khoảng trống dòng của tiêu đề: before 6, after 6.
+              </AlertDescription>
+            </Alert>
+            
+            <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertTitle>Tóm tắt</AlertTitle>
+              <AlertDescription>
+                Từ khóa trong khoảng 150-250 từ gồm các nội dung Giới thiệu nghiên cứu, mục đích nghiên cứu, phương pháp nghiên cứu, kết quả và kết luận.
+              </AlertDescription>
+            </Alert>
+            
+            <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertTitle>Thông tin liên hệ</AlertTitle>
+              <AlertDescription>
+                Để tiện liên hệ người viết cần ghi rõ: Họ tên, học hàm, học vị, chuyên ngành, điện thoại, fax, email, địa chỉ cuối bài.
+              </AlertDescription>
+            </Alert>
+            
+            <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertTitle>Từ khóa</AlertTitle>
+              <AlertDescription>
+                Liệt kê đủ 5 từ khóa
+              </AlertDescription>
+            </Alert>
+            
+            <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertTitle>Thông tin tác giả</AlertTitle>
+              <AlertDescription>
+                Tất cả tác giả là thành viên bài báo cần cung cấp thông tin đầy đủ gồm họ tên, nơi công tác và email. (khi khai báo thông tin để nộp bài)
+              </AlertDescription>
+            </Alert>
+            
+            <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertTitle>Công thức</AlertTitle>
+              <AlertDescription>
+                Tất cả công thức được đánh số thứ tự từ số đầu tiên (1) đến số cuối cùng (n+1).
+              </AlertDescription>
+            </Alert>
+            
+            <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertTitle>Tài liệu tham khảo</AlertTitle>
+              <AlertDescription>
+                Tài liệu tham khảo theo chuẩn IEEE. Số tài liệu trong danh mục tài liệu tham khảo bằng số tài liệu được trích dẫn trong bài và để trong ngoặc vuông [....].
+              </AlertDescription>
+            </Alert>
+            
+            <Alert>
+              <CheckCircle className="h-4 w-4" />
+              <AlertTitle>Độ dài bài viết</AlertTitle>
+              <AlertDescription>
+                Nội dung bài viết không vượt quá 10 (mười) trang A4 (210x297mm), bao gồm cả hình ảnh, bảng biểu, tài liệu tham khảo.
+              </AlertDescription>
+            </Alert>
           </div>
         </div>
-
-        {/* Progress Bar */}
-        {uploadProgress > 0 && (
-          <div className="space-y-2">
-            <Progress value={uploadProgress} className="h-2" />
-            <p className="text-sm text-gray-500 text-right">
-              {uploadProgress}%
-            </p>
-          </div>
-        )}
-
-        {/* Draft Checkbox */}
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            checked={isDraft}
-            onChange={(e) => setIsDraft(e.target.checked)}
-            className="mr-2"
-          />
-          <label className="text-sm">Lưu dưới dạng nháp</label>
-        </div>
-
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={isSubmitting || loading}
-          className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 disabled:bg-gray-400"
-        >
-          {isSubmitting || loading ? 'Đang xử lý...' : isDraft ? 'Lưu nháp' : 'Gửi bài viết'}
-        </button>
-      </form>
+      </div>
     </div>
-  );
-};
+  )
+}
 
-export default Postarticle;
+export default PostArticle

@@ -218,30 +218,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       throw error;
     }
   },
-  //   set({ isLoading: true, error: null })
-  //   try {
-  //     const response = await axios.get<{ success: boolean; user: User }>(`http://localhost:5000/api/profile`);
-
-  //     if (response.data.success && response.data.user) {
-  //       set({
-  //         user: response.data.user,
-  //         isAuthenticated: true,
-  //         isLoading: false,
-  //       })
-  //     } else {
-  //       set({
-  //         isLoading: false,
-  //         error: "Failed to fetch profile data",
-  //       })
-  //     }
-  //   } catch (error) {
-  //     const axiosError = error as AxiosError<{ message: string }>
-  //     set({
-  //       error: axiosError.response?.data?.message || "Error fetching profile",
-  //       isLoading: false,
-  //     })
-  //   }
-  // },
 
   updateProfile: async (name, username, link, national, avatarUrl) => {
     set({ isLoading: true, error: null });

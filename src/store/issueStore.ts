@@ -125,6 +125,13 @@ const useIssueStore = create<IssueStore>((set) => ({
       setLoading("deleteIssue", true)
       setError("deleteIssue", null)
 
+      // Check if issue exists and is published
+      const issue = useIssueStore.getState().issues.find(i => i._id === id)
+      if (issue?.isPublished) {
+        showErrorToast("Cannot delete a published issue")
+        return
+      }
+
       await apiService.delete(`/issues/${id}`)
 
       set((state) => ({
@@ -133,10 +140,11 @@ const useIssueStore = create<IssueStore>((set) => ({
       }))
 
       showSuccessToast("Issue deleted successfully")
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting issue:", error)
-      setError("deleteIssue", "Failed to delete issue")
-      showErrorToast("Failed to delete issue")
+      const errorMessage = error.response?.data?.message || "Failed to delete issue"
+      setError("deleteIssue", errorMessage)
+      showErrorToast(errorMessage)
     } finally {
       setLoading("deleteIssue", false)
     }

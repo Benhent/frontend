@@ -19,6 +19,7 @@ interface User {
 
 interface AuthState {
   user: User | null;
+  users: User[];
   isAuthenticated: boolean;
   error: string | null;
   isLoading: boolean;
@@ -50,10 +51,12 @@ interface AuthState {
     national: string,
     avatarFile: File | null
   ) => Promise<void>;
+  fetchUsers: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
+  users: [],
   isAuthenticated: false,
   error: null,
   isLoading: false,
@@ -267,6 +270,22 @@ export const useAuthStore = create<AuthState>((set) => ({
       throw error;
     }
   },
+
+  fetchUsers: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.get<User[]>(`${API_URL}/users`);
+      set({ users: response.data, isLoading: false });
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message: string }>;
+      set({ 
+        error: axiosError.response?.data?.message || "Error fetching users", 
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+
   clearMessage: () => set({ message: null, error: null }),
 }));
 

@@ -50,12 +50,7 @@ const navItems: NavItem[] = [
     title: "Thảo luận",
     href: "/admin/discussions",
     icon: MessageSquare,
-  },
-  {
-    title: "Cài đặt",
-    href: "/admin/settings",
-    icon: Settings,
-  },
+  }
 ]
 
 interface AdminSidebarProps {

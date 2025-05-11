@@ -38,16 +38,34 @@ const FieldManage = () => {
   const [selectedField, setSelectedField] = useState<Field | null>(null)
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
+  const [sortBy, setSortBy] = useState<'name' | 'level'>('name')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
 
-  const filteredFields = fields.filter((field) =>
-    field.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    field.code.toLowerCase().includes(searchQuery.toLowerCase())
-  )
-  const total = filteredFields.length
+  const filteredFields = fields.filter((field) => {
+    const matchSearch = field.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      field.code.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchStatus = statusFilter === 'all' ? true : (statusFilter === 'active' ? field.isActive : !field.isActive)
+    return matchSearch && matchStatus
+  })
+
+  const sortedFields = [...filteredFields].sort((a, b) => {
+    let aValue: any = a[sortBy]
+    let bValue: any = b[sortBy]
+    if (sortBy === 'name') {
+      aValue = aValue?.toLowerCase?.() || ''
+      bValue = bValue?.toLowerCase?.() || ''
+    }
+    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1
+    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1
+    return 0
+  })
+
+  const total = sortedFields.length
   const totalPages = Math.ceil(total / limit) || 1
   const canPrev = page > 1
   const canNext = page < totalPages
-  const pagedFields = filteredFields.slice((page - 1) * limit, page * limit)
+  const pagedFields = sortedFields.slice((page - 1) * limit, page * limit)
 
   const addForm = useForm<FieldFormData>({
     defaultValues: {
@@ -88,17 +106,6 @@ const FieldManage = () => {
     }
   }, [selectedField, editForm])
 
-  const handleParentChange = (form: UseFormReturn<FieldFormData>, parentId: string) => {
-    if (!parentId || parentId === "none" || parentId === "") {
-      form.setValue("level", 1)
-      form.setValue("parent", "")
-    } else {
-      const parentField = fields.find(f => f._id === parentId)
-      form.setValue("level", (parentField?.level || 1) + 1)
-      form.setValue("parent", parentId)
-    }
-  }
-
   const handleAddField = async (data: FieldFormData) => {
     await createField(data)
     setIsAddDialogOpen(false)
@@ -107,7 +114,9 @@ const FieldManage = () => {
 
   const handleEditField = async (data: FieldFormData) => {
     if (!selectedField?._id) return
-    await updateField(selectedField._id, data)
+    const submitData = { ...data }
+    if (!submitData.parent) delete submitData.parent
+    await updateField(selectedField._id, submitData)
     setIsEditDialogOpen(false)
     editForm.reset()
   }
@@ -120,6 +129,17 @@ const FieldManage = () => {
 
   const handleToggleStatus = async (id: string) => {
     await toggleFieldStatus(id)
+  }
+
+  const handleParentChange = (form: UseFormReturn<FieldFormData>, parentId: string) => {
+    if (!parentId || parentId === "none" || parentId === "") {
+      form.setValue("level", 1)
+      form.setValue("parent", "")
+    } else {
+      const parentField = fields.find(f => f._id === parentId)
+      form.setValue("level", (parentField?.level || 1) + 1)
+      form.setValue("parent", parentId)
+    }
   }
 
   return (
@@ -211,15 +231,47 @@ const FieldManage = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            <Select value={statusFilter} onValueChange={val => setStatusFilter(val as 'all' | 'active' | 'inactive')}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả</SelectItem>
+                <SelectItem value="active">Hoạt động</SelectItem>
+                <SelectItem value="inactive">Không hoạt động</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="rounded-lg border overflow-x-auto w-full">
             <Table className="w-full">
               <TableHeader>
                 <TableRow className="bg-muted">
-                  <TableHead className="w-1/4">Tên lĩnh vực</TableHead>
+                  <TableHead
+                    className="w-1/4 cursor-pointer select-none"
+                    onClick={() => {
+                      if (sortBy === 'name') setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+                      else {
+                        setSortBy('name')
+                        setSortOrder('asc')
+                      }
+                    }}
+                  >
+                    Tên lĩnh vực {sortBy === 'name' ? (sortOrder === 'asc' ? '▲' : '▼') : ''}
+                  </TableHead>
                   <TableHead className="w-1/6">Mã</TableHead>
                   <TableHead className="w-1/4">Lĩnh vực cha</TableHead>
-                  <TableHead className="w-1/12 text-center">Cấp</TableHead>
+                  <TableHead
+                    className="w-1/12 text-center cursor-pointer select-none"
+                    onClick={() => {
+                      if (sortBy === 'level') setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+                      else {
+                        setSortBy('level')
+                        setSortOrder('asc')
+                      }
+                    }}
+                  >
+                    Cấp {sortBy === 'level' ? (sortOrder === 'asc' ? '▲' : '▼') : ''}
+                  </TableHead>
                   <TableHead className="w-1/6 text-center">Trạng thái</TableHead>
                   <TableHead className="w-1/12 text-right">Thao tác</TableHead>
                 </TableRow>

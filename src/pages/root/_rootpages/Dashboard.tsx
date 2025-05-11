@@ -1,4 +1,7 @@
+import { useEffect, useRef } from "react"
 import { motion } from "framer-motion"
+import gsap from "gsap"
+import { ScrollTrigger } from "gsap/ScrollTrigger"
 import {
   BookOpen,
   Calendar,
@@ -17,12 +20,48 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/card"
 
+gsap.registerPlugin(ScrollTrigger)
+
 const Dashboard = () => {
+  // Refs for each section
+  const heroRef = useRef<HTMLDivElement>(null)
+  const introRef = useRef<HTMLDivElement>(null)
+  const researchRef = useRef<HTMLDivElement>(null)
+  const boardRef = useRef<HTMLDivElement>(null)
+  const ctaRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const sections = [heroRef, introRef, researchRef, boardRef, ctaRef]
+    sections.forEach((ref, idx) => {
+      if (ref.current) {
+        gsap.fromTo(
+          ref.current,
+          { opacity: 0, y: 60 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 1,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: ref.current,
+              start: "top 80%",
+              toggleActions: "play none none none",
+            },
+            delay: idx * 0.1,
+          }
+        )
+      }
+    })
+    return () => {
+      ScrollTrigger.getAll().forEach(t => t.kill())
+    }
+  }, [])
+
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 md:p-6 pt-20">
+    <div className="w-full min-h-screen bg-gradient-to-b from-[#f8fafc] to-[#e8f0ea] p-0">
       {/* Hero Section */}
-      <section className="mb-12">
-        <div className="relative rounded-2xl overflow-hidden">
+      <section ref={heroRef} className="mb-12 w-full">
+        <div className="relative rounded-none overflow-hidden w-full">
           <div className="absolute inset-0 bg-gradient-to-r from-primary to-secondary opacity-90"></div>
           <div className="relative z-10 p-8 md:p-12 text-white">
             <div className="flex items-center mb-6">
@@ -48,7 +87,7 @@ const Dashboard = () => {
       </section>
 
       {/* Introduction Section */}
-      <section className="mb-12">
+      <section ref={introRef} className="mb-12 w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -96,7 +135,7 @@ const Dashboard = () => {
       </section>
 
       {/* Research Areas Section */}
-      <section className="mb-12">
+      <section ref={researchRef} className="mb-12 w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -357,7 +396,7 @@ const Dashboard = () => {
       </section>
 
       {/* Editorial Board Section */}
-      <section className="mb-12">
+      <section ref={boardRef} className="mb-12 w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -508,7 +547,7 @@ const Dashboard = () => {
       </section>
 
       {/* Call to Action */}
-      <section className="mb-12">
+      <section ref={ctaRef} className="mb-12 w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

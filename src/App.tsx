@@ -33,6 +33,8 @@ import ArticleEdit from "./pages/Admin/_adminpages/partial/article/articleEdit";
 import TestFetchField from "./pages/root/_rootpages/test";
 import AuthorManage from "./pages/Admin/_adminpages/authorManage";
 import FieldManage from "./pages/Admin/_adminpages/fieldManage";
+import IssueManage from "./pages/Admin/_adminpages/issueManage";
+import AdminDashboard from "./pages/Admin/_adminpages/adminDashboard";
 
 const App: React.FC = () => {
   const { isCheckingAuth, checkAuth } = useAuthStore();
@@ -68,11 +70,13 @@ const App: React.FC = () => {
 
           {/* admin routes */}
           <Route element={<AdminProtectedRoute><AdminLayout /></AdminProtectedRoute>}>
+            <Route path='/admin/dashboard' element={<AdminDashboard />}/>
             <Route path='/admin/articles' element={<ArticleManage />}/>
             <Route path='/admin/articles/create' element={<ArticleCreate />}/>
             <Route path='/admin/articles/:id' element={<ArticleDetail />}/>
             <Route path='/admin/articles/:id/edit' element={<ArticleEdit />}/>
             <Route path='/admin/authors' element={<AuthorManage />}/>
+            <Route path='/admin/issues' element={<IssueManage />}/>
             <Route path='/admin/fields' element={<FieldManage />}/>
           </Route>
 

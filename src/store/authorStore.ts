@@ -5,20 +5,49 @@ import type { ArticleAuthor } from "../types/article"
 
 interface AuthorState {
   authors: ArticleAuthor[]
+  loading: {
+    authors: boolean
+    createAuthor: boolean
+    updateAuthor: boolean
+    deleteAuthor: boolean
+  }
+  error: {
+    authors: string | null
+    createAuthor: string | null
+    updateAuthor: string | null
+    deleteAuthor: string | null
+  }
 }
 
 interface AuthorStore extends AuthorState {
   fetchArticleAuthors: (articleId: string) => Promise<void>
+  fetchAllAuthors: (params?: { hasAccount?: boolean; isCorresponding?: boolean }) => Promise<void>
+  fetchAuthorById: (id: string) => Promise<ArticleAuthor | null>
   createArticleAuthor: (data: Partial<ArticleAuthor>) => Promise<void>
   updateArticleAuthor: (id: string, data: Partial<ArticleAuthor>) => Promise<void>
   deleteArticleAuthor: (id: string) => Promise<void>
+  resetState: () => void
 }
 
-const useAuthorStore = create<AuthorStore>((set) => ({
-  // Initial state
+const initialState: AuthorState = {
   authors: [],
+  loading: {
+    authors: false,
+    createAuthor: false,
+    updateAuthor: false,
+    deleteAuthor: false,
+  },
+  error: {
+    authors: null,
+    createAuthor: null,
+    updateAuthor: null,
+    deleteAuthor: null,
+  },
+}
 
-  // Author operations
+const useAuthorStore = create<AuthorStore>((set, get) => ({
+  ...initialState,
+
   fetchArticleAuthors: async (articleId: string) => {
     const { setLoading, setError, showErrorToast } = useUIStore.getState()
 
@@ -26,7 +55,7 @@ const useAuthorStore = create<AuthorStore>((set) => ({
       setLoading("authors", true)
       setError("authors", null)
 
-      const response = await apiService.get<ArticleAuthor[]>(`/article-authors/article/${articleId}`)
+      const response = await apiService.get<ArticleAuthor[]>(`/article-authors/${articleId}/authors`)
 
       set({
         authors: response.data,
@@ -35,6 +64,47 @@ const useAuthorStore = create<AuthorStore>((set) => ({
       console.error("Error fetching article authors:", error)
       setError("authors", "Failed to load article authors")
       showErrorToast("Failed to load article authors")
+    } finally {
+      setLoading("authors", false)
+    }
+  },
+
+  fetchAllAuthors: async (params?: { hasAccount?: boolean; isCorresponding?: boolean }) => {
+    const { setLoading, setError, showErrorToast } = useUIStore.getState()
+
+    try {
+      setLoading("authors", true)
+      setError("authors", null)
+
+      const response = await apiService.get<ArticleAuthor[]>("/article-authors", params)
+
+      set({
+        authors: response.data,
+      })
+    } catch (error) {
+      console.error("Error fetching all authors:", error)
+      setError("authors", "Failed to load authors")
+      showErrorToast("Failed to load authors")
+    } finally {
+      setLoading("authors", false)
+    }
+  },
+
+  fetchAuthorById: async (id: string) => {
+    const { setLoading, setError, showErrorToast } = useUIStore.getState()
+
+    try {
+      setLoading("authors", true)
+      setError("authors", null)
+
+      const response = await apiService.get<ArticleAuthor>(`/article-authors/${id}`)
+
+      return response.data
+    } catch (error) {
+      console.error("Error fetching author:", error)
+      setError("authors", "Failed to load author")
+      showErrorToast("Failed to load author")
+      return null
     } finally {
       setLoading("authors", false)
     }
@@ -107,6 +177,10 @@ const useAuthorStore = create<AuthorStore>((set) => ({
     } finally {
       setLoading("deleteAuthor", false)
     }
+  },
+
+  resetState: () => {
+    set(initialState)
   },
 }))
 

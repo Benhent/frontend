@@ -1,6 +1,6 @@
 import type React from "react"
 import { Link, useLocation } from "react-router-dom"
-import { BarChart3, FileText, Users, Settings, LogOut, BookOpen, MessageSquare } from "lucide-react"
+import { BarChart3, FileText, Users, Settings, LogOut, BookOpen, MessageSquare, LandPlot } from "lucide-react"
 import { cn } from "../lib/utils"
 import { Button } from "../components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar"
@@ -40,6 +40,11 @@ const navItems: NavItem[] = [
     title: "Số báo",
     href: "/admin/issues",
     icon: BookOpen,
+  },
+  {
+    title:"Lĩnh vực",
+    href: "/admin/fields",
+    icon: LandPlot,
   },
   {
     title: "Thảo luận",
@@ -118,7 +123,7 @@ export function AdminSidebar({ sidebarOpen, setSidebarOpen, isMobile = false }: 
                 <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/admin/profile">
+                  <Link to="/profile">
                     <Users className="mr-2 h-4 w-4" />
                     <span>Hồ sơ</span>
                   </Link>
@@ -183,7 +188,7 @@ export function AdminSidebar({ sidebarOpen, setSidebarOpen, isMobile = false }: 
                 <DropdownMenuLabel>Tài khoản của tôi</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
-                  <Link to="/admin/profile">
+                  <Link to="/profile">
                     <Users className="mr-2 h-4 w-4" />
                     <span>Hồ sơ</span>
                   </Link>

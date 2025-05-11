@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "../../../../../components/ui/card"
 import { Button } from "../../../../../components/ui/button"
@@ -24,11 +24,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../../../../../components/ui/alert-dialog"
-import { ArrowLeft, FileText, Loader2, Plus, Trash2, X, Check, Search, ChevronDown, ChevronUp } from "lucide-react"
+import { ArrowLeft, FileText, Loader2, Plus, Trash2, X } from "lucide-react"
 import { useArticleStore, useFieldStore, useUIStore } from "../../../../../store/rootStore"
 import { uploadArticleThumbnailToCloudinary, uploadArticleFileToCloudinary } from "../../../../../config/cloudinary"
-import type { ArticleAuthor, Field } from "../../../../../types/article"
-import { cn } from "../../../../../lib/utils"
+import type { ArticleAuthor } from "../../../../../types/article"
 
 export default function ArticleCreate() {
   const navigate = useNavigate()
@@ -66,25 +65,21 @@ export default function ArticleCreate() {
     isCorresponding: false,
   })
 
-  // Field dropdown state
-  const [isFieldDropdownOpen, setIsFieldDropdownOpen] = useState(false)
-  const [fieldSearchQuery, setFieldSearchQuery] = useState("")
-  const fieldDropdownRef = useRef<HTMLDivElement>(null)
-
-  // Field chip input state
-  const [isChipInputFocused, setIsChipInputFocused] = useState(false)
-  const [chipSearchQuery, setChipSearchQuery] = useState("")
-  const chipInputRef = useRef<HTMLDivElement>(null)
-
   const [tab, setTab] = useState("basic")
   const [formErrors, setFormErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Thay đổi phần useEffect để kiểm tra và xử lý dữ liệu fields
   useEffect(() => {
-    if (Array.isArray(fields) && fields.length === 0) {
-      fetchFields({ isActive: true })
-    }
-  }, [fetchFields, fields])
+    fetchFields({ isActive: true })
+  }, [fetchFields])
+
+  // Thêm hàm debug để kiểm tra dữ liệu fields
+  // useEffect(() => {
+  //   if (fields) {
+  //     console.log("Fields data:", fields)
+  //   }
+  // }, [fields])
 
   // Handle thumbnail preview
   useEffect(() => {
@@ -99,49 +94,27 @@ export default function ArticleCreate() {
     }
   }, [thumbnail])
 
-  // Handle click outside field dropdown
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (fieldDropdownRef.current && !fieldDropdownRef.current.contains(event.target as Node)) {
-        setIsFieldDropdownOpen(false)
-      }
-      if (chipInputRef.current && !chipInputRef.current.contains(event.target as Node)) {
-        setIsChipInputFocused(false)
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [])
-
   // Field selection handlers
-  const handleMainFieldChange = (fieldId: string) => {
+  const handleMainFieldChange = (value: string) => {
     setForm((prev) => ({
       ...prev,
-      field: fieldId,
-      secondaryFields: prev.secondaryFields.filter((id) => id !== fieldId),
+      field: value,
+      // Remove the main field from secondary fields if it's there
+      secondaryFields: prev.secondaryFields.filter((id) => id !== value),
     }))
 
     if (formErrors.field) {
       setFormErrors((prev) => ({ ...prev, field: "" }))
     }
-
-    setIsFieldDropdownOpen(false)
-    setFieldSearchQuery("")
   }
 
-  const handleSecondaryFieldToggle = (fieldId: string) => {
-    setForm((prev) => {
-      const alreadySelected = prev.secondaryFields.includes(fieldId)
-      return {
+  const handleSecondaryFieldChange = (value: string) => {
+    if (!form.secondaryFields.includes(value) && value !== form.field) {
+      setForm((prev) => ({
         ...prev,
-        secondaryFields: alreadySelected
-          ? prev.secondaryFields.filter((id) => id !== fieldId)
-          : [...prev.secondaryFields, fieldId],
-      }
-    })
+        secondaryFields: [...prev.secondaryFields, value],
+      }))
+    }
   }
 
   const handleRemoveSecondaryField = (fieldId: string) => {
@@ -151,24 +124,12 @@ export default function ArticleCreate() {
     }))
   }
 
+  // Thay đổi hàm getFieldNameById để xử lý cấu trúc dữ liệu mới
   const getFieldNameById = (fieldId: string): string => {
-    if (!Array.isArray(fields)) return ""
-    const field = fields.find((f: Field) => f._id === fieldId)
+    if (!fields || !Array.isArray(fields)) return ""
+    const field = fields.find((f: any) => f._id === fieldId || f.id === fieldId)
     return field ? field.name : ""
   }
-
-  const filteredMainFields = Array.isArray(fields)
-    ? fields.filter((field: Field) => field.name.toLowerCase().includes(fieldSearchQuery.toLowerCase()))
-    : []
-
-  const filteredSecondaryFields = Array.isArray(fields)
-    ? fields.filter(
-        (field: Field) =>
-          field._id !== form.field &&
-          field.name.toLowerCase().includes(chipSearchQuery.toLowerCase()) &&
-          !form.secondaryFields.includes(field._id),
-      )
-    : []
 
   const handleAddAuthor = () => {
     // Validate author input
@@ -469,123 +430,83 @@ export default function ArticleCreate() {
                     </Select>
                   </div>
 
-                  {/* Field Dropdown */}
-                  <div ref={fieldDropdownRef} className="relative">
-                    <Label htmlFor="mainField" className={formErrors.field ? "text-red-500" : ""}>
+                  {/* Main Field Dropdown */}
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="mainField" className={`text-right ${formErrors.field ? "text-red-500" : ""}`}>
                       Lĩnh vực chính *
                     </Label>
-                    <div
-                      className={cn(
-                        "flex items-center justify-between border rounded-md p-2 cursor-pointer",
-                        formErrors.field ? "border-red-500" : "",
-                        isFieldDropdownOpen ? "ring-2 ring-blue-500" : "",
-                      )}
-                      onClick={() => setIsFieldDropdownOpen(!isFieldDropdownOpen)}
-                    >
-                      <span className={form.field ? "" : "text-gray-400"}>
-                        {form.field ? getFieldNameById(form.field) : "Chọn lĩnh vực chính"}
-                      </span>
-                      {isFieldDropdownOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                    </div>
-                    {formErrors.field && <p className="text-red-500 text-sm mt-1">{formErrors.field}</p>}
-
-                    {isFieldDropdownOpen && (
-                      <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg">
-                        <div className="p-2 border-b">
-                          <div className="relative">
-                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                            <Input
-                              placeholder="Tìm kiếm lĩnh vực..."
-                              className="pl-8"
-                              value={fieldSearchQuery}
-                              onChange={(e) => setFieldSearchQuery(e.target.value)}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </div>
-                        </div>
-                        <div className="max-h-60 overflow-y-auto">
-                          {filteredMainFields.length > 0 ? (
-                            filteredMainFields.map((field: Field) => (
-                              <div
-                                key={field._id}
-                                className={cn(
-                                  "flex items-center justify-between p-2 hover:bg-gray-100 cursor-pointer",
-                                  form.field === field._id ? "bg-blue-50" : "",
-                                )}
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleMainFieldChange(field._id)
-                                }}
-                              >
-                                <span>{field.name}</span>
-                                {form.field === field._id && <Check size={16} className="text-blue-500" />}
-                              </div>
+                    <div className="col-span-3">
+                      <Select value={form.field} onValueChange={handleMainFieldChange}>
+                        <SelectTrigger id="mainField" className={formErrors.field ? "border-red-500" : ""}>
+                          <SelectValue placeholder="Chọn lĩnh vực chính" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.isArray(fields) && fields.length > 0 ? (
+                            fields.map((field: any) => (
+                              <SelectItem key={field._id || field.id} value={field._id || field.id}>
+                                {field.name}
+                              </SelectItem>
                             ))
                           ) : (
-                            <div className="p-2 text-center text-gray-500">Không tìm thấy lĩnh vực</div>
+                            <SelectItem value="loading" disabled>
+                              Không có dữ liệu lĩnh vực
+                            </SelectItem>
                           )}
-                        </div>
-                      </div>
-                    )}
+                        </SelectContent>
+                      </Select>
+                      {formErrors.field && <p className="text-red-500 text-sm mt-1">{formErrors.field}</p>}
+                    </div>
                   </div>
 
-                  {/* Field Chip Input */}
-                  <div ref={chipInputRef} className="relative">
-                    <Label>Lĩnh vực phụ</Label>
-                    <div
-                      className={cn(
-                        "border rounded-md p-2 min-h-[42px]",
-                        isChipInputFocused ? "ring-2 ring-blue-500" : "",
-                      )}
-                      onClick={() => setIsChipInputFocused(true)}
-                    >
-                      <div className="flex flex-wrap gap-2 mb-2">
+                  {/* Secondary Fields */}
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="secondaryFields" className="text-right">
+                      Lĩnh vực phụ
+                    </Label>
+                    <div className="col-span-3">
+                      <Select onValueChange={handleSecondaryFieldChange}>
+                        <SelectTrigger id="secondaryFields">
+                          <SelectValue placeholder="Chọn lĩnh vực phụ" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.isArray(fields) && fields.length > 0 ? (
+                            fields
+                              .filter((field: any) => {
+                                const fieldId = field._id || field.id
+                                return fieldId !== form.field && !form.secondaryFields.includes(fieldId)
+                              })
+                              .map((field: any) => (
+                                <SelectItem key={field._id || field.id} value={field._id || field.id}>
+                                  {field.name}
+                                </SelectItem>
+                              ))
+                          ) : (
+                            <SelectItem value="loading" disabled>
+                              Không có dữ liệu lĩnh vực
+                            </SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <div className="mt-2 flex flex-wrap gap-2">
                         {form.secondaryFields.map((fieldId) => (
-                          <Badge key={fieldId} variant="secondary" className="flex items-center gap-1 py-1">
-                            {getFieldNameById(fieldId)}
-                            <X
-                              size={14}
-                              className="cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleRemoveSecondaryField(fieldId)
-                              }}
-                            />
-                          </Badge>
-                        ))}
-                      </div>
-
-                      {isChipInputFocused && (
-                        <div className="relative">
-                          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
-                          <Input
-                            placeholder="Tìm kiếm lĩnh vực phụ..."
-                            className="pl-8"
-                            value={chipSearchQuery}
-                            onChange={(e) => setChipSearchQuery(e.target.value)}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    {isChipInputFocused && filteredSecondaryFields.length > 0 && (
-                      <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                        {filteredSecondaryFields.map((field: Field) => (
                           <div
-                            key={field._id}
-                            className="flex items-center p-2 hover:bg-gray-100 cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleSecondaryFieldToggle(field._id)
-                              setChipSearchQuery("")
-                            }}
+                            key={fieldId}
+                            className="flex items-center gap-2 rounded-md bg-secondary px-2 py-1 text-sm"
                           >
-                            {field.name}
+                            {getFieldNameById(fieldId)}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-4 w-4 p-0"
+                              onClick={() => handleRemoveSecondaryField(fieldId)}
+                            >
+                              <span className="sr-only">Remove field</span>
+                              <X className="h-3 w-3" />
+                            </Button>
                           </div>
                         ))}
                       </div>
-                    )}
+                    </div>
                   </div>
 
                   <div className="md:col-span-2">

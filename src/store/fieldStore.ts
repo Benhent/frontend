@@ -34,7 +34,7 @@ const useFieldStore = create<FieldStore>((set) => ({
       const response = await apiService.get<Field[]>("/fields", params)
 
       set({
-        fields: response.data,
+        fields: Array.isArray(response.data) ? response.data : [],
       })
     } catch (error) {
       console.error("Error fetching fields:", error)
@@ -146,7 +146,7 @@ const useFieldStore = create<FieldStore>((set) => ({
       setLoading("toggleFieldStatus", true)
       setError("toggleFieldStatus", null)
 
-      const response = await apiService.put<Field>(`/fields/${id}/toggle-status`, {})
+      const response = await apiService.patch<Field>(`/fields/${id}/toggle-status`, {})
 
       set((state) => ({
         fields: state.fields.map((field) => (field._id === id ? response.data : field)),

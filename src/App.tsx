@@ -30,7 +30,9 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import ArticleCreate from "./pages/Admin/_adminpages/partial/article/articleCreate";
 import ArticleDetail from "./pages/Admin/_adminpages/partial/article/articleDetail";
 import ArticleEdit from "./pages/Admin/_adminpages/partial/article/articleEdit";
-// import TestPage from "./pages/root/_rootpages/test";
+import TestFetchField from "./pages/root/_rootpages/test";
+import AuthorManage from "./pages/Admin/_adminpages/authorManage";
+import FieldManage from "./pages/Admin/_adminpages/fieldManage";
 
 const App: React.FC = () => {
   const { isCheckingAuth, checkAuth } = useAuthStore();
@@ -53,7 +55,7 @@ const App: React.FC = () => {
       <main className={`flex-1 ${!isPrivateRoute && !isAdminRoute ? 'pt-16' : ''}`}>
         <Routes>
 
-          {/* <Route path='/test' element={<TestPage />} /> */}
+          <Route path='/test' element={<TestFetchField />} />
 
           {/* public routes */}
           <Route path='/' element={<Dashboard />}/>
@@ -70,6 +72,8 @@ const App: React.FC = () => {
             <Route path='/admin/articles/create' element={<ArticleCreate />}/>
             <Route path='/admin/articles/:id' element={<ArticleDetail />}/>
             <Route path='/admin/articles/:id/edit' element={<ArticleEdit />}/>
+            <Route path='/admin/authors' element={<AuthorManage />}/>
+            <Route path='/admin/fields' element={<FieldManage />}/>
           </Route>
 
           {/* auth routes */}

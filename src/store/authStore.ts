@@ -38,6 +38,7 @@ interface AuthState {
   verifyEmail: (code: string) => Promise<{ message: string }>;
   resendVerification: (email: string) => Promise<void>;
   checkAuth: () => Promise<void>;
+  checkEmailExists: (email: string) => Promise<boolean>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string, confirmPassword: string) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string, confirmPassword: string) => Promise<void>;
@@ -164,6 +165,16 @@ export const useAuthStore = create<AuthState>((set) => ({
         isCheckingAuth: false, 
         isAuthenticated: false 
       });
+    }
+  },
+
+  checkEmailExists: async (email) => {
+    try {
+      const response = await axios.post<{ success: boolean; exists: boolean }>(`${API_URL}/check-email`, { email });
+      return response.data.exists;
+    } catch (error) {
+      // Handle error silently and return false (email doesn't exist)
+      return false;
     }
   },
 

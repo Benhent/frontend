@@ -1,14 +1,17 @@
 export interface ArticleAuthor {
     _id?: string
-    userId?: string
+    articleId?: string
+    userId?: string | { _id: string; name: string; email: string }
+    hasAccount: boolean
     fullName: string
     email: string
     institution: string
     country: string
     isCorresponding: boolean
-    orcid?: string
     order?: number
-    hasAccount?: boolean
+    orcid?: string
+    createdAt?: string
+    updatedAt?: string
 }
   
 export interface ArticleFile {

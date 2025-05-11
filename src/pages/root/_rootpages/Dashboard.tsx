@@ -1,4 +1,6 @@
-import { motion } from "framer-motion"
+import { useEffect } from "react"
+import { motion, useAnimation, useInView } from "framer-motion"
+import { useNavigate } from "react-router-dom"
 import {
   BookOpen,
   Calendar,
@@ -6,534 +8,395 @@ import {
   Users,
   Briefcase,
   Cpu,
-  FlaskRoundIcon as Flask,
+  Flask,
   Globe,
   ExternalLink,
+  ArrowRight,
+  Search,
+  FileText,
+  Mail,
+  Phone,
 } from "lucide-react"
 
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../../../components/ui/accordion"
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs"
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card"
+import { Button } from "../../../components/ui/button"
+import { Badge } from "../../../components/ui/badge"
+import { Input } from "../../../components/ui/input"
+import { Separator } from "../../../components/ui/separator"
 
 const Dashboard = () => {
+  const navigate = useNavigate()
+
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 md:p-6 pt-20">
+    <div className="min-h-screen bg-gradient-to-b from-background to-background/50">
       {/* Hero Section */}
-      <section className="mb-12">
-        <div className="relative rounded-2xl overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary to-secondary opacity-90"></div>
-          <div className="relative z-10 p-8 md:p-12 text-white">
-            <div className="flex items-center mb-6">
-              <BookOpen className="h-10 w-10 mr-4" />
-              <h1 className="text-3xl md:text-4xl font-bold">Tạp chí Khoa học Lạc Hồng</h1>
-            </div>
-            <p className="text-lg md:text-xl max-w-3xl mb-6">
-              Tạp chí đa ngành với sứ mệnh công bố các kết quả nghiên cứu khoa học thuộc lĩnh vực đào tạo, giảng dạy của
-              Trường Đại học Lạc Hồng và cộng đồng khoa học.
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                <Calendar className="h-5 w-5 mr-2" />
-                <span>ISSN: 2525-2186</span>
-              </div>
-              <div className="flex items-center bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                <Users className="h-5 w-5 mr-2" />
-                <span>Xuất bản từ 2016</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HeroSection />
 
-      {/* Introduction Section */}
-      <section className="mb-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
-        >
-          <h2 className="text-2xl md:text-3xl font-bold mb-6 text-primary">Giới thiệu về Tạp chí</h2>
+      {/* Quick Actions */}
+      <QuickActions />
 
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>1. Mục đích, tôn chỉ và phạm vi của tạp chí</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-start">
-                <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center mr-3 mt-0.5">
-                  <span className="text-primary">•</span>
-                </div>
-                <p>Thông tin về các hoạt động khoa học của Trường Đại học Lạc Hồng;</p>
-              </div>
-              <div className="flex items-start">
-                <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center mr-3 mt-0.5">
-                  <span className="text-primary">•</span>
-                </div>
-                <p>
-                  Giới thiệu công bố kết quả nghiên cứu khoa học thuộc lĩnh vực đào tạo, giảng dạy của Trường Đại học
-                  Lạc Hồng.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Latest Articles */}
+      <LatestArticles />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>2. Chu kỳ phát hành</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>
-                Tạp chí Khoa học Lạc Hồng (ISSN: 2525-2186) là một tạp chí đa ngành đã ra số đầu tiên tháng 3 năm 2016
-                (Theo giấy phép xuất bản số 348/GP-BTTTT ngày 03/12/2014) kỳ hạn 03 tháng 1 kỳ, xuất bản Tiếng Việt và
-                Tiếng Anh.
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </section>
+      {/* Research Areas */}
+      <ResearchAreas />
 
-      {/* Research Areas Section */}
-      <section className="mb-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
-        >
-          <h2 className="text-2xl md:text-3xl font-bold mb-6 text-primary">Các Lĩnh vực chính</h2>
-
-          <Tabs defaultValue="kinh-te" className="w-full">
-            <TabsList className="grid grid-cols-2 md:grid-cols-4 mb-6">
-              <TabsTrigger value="kinh-te" className="flex items-center gap-2">
-                <Briefcase className="h-4 w-4" />
-                <span>Kinh tế</span>
-              </TabsTrigger>
-              <TabsTrigger value="cong-nghe" className="flex items-center gap-2">
-                <Cpu className="h-4 w-4" />
-                <span>Khoa học Công nghệ</span>
-              </TabsTrigger>
-              <TabsTrigger value="hoa-duoc" className="flex items-center gap-2">
-                <Flask className="h-4 w-4" />
-                <span>Hóa - Dược</span>
-              </TabsTrigger>
-              <TabsTrigger value="xa-hoi" className="flex items-center gap-2">
-                <Globe className="h-4 w-4" />
-                <span>Xã hội</span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="kinh-te">
-              <Card>
-                <CardHeader>
-                  <CardTitle>3.1. Lĩnh vực kinh tế</CardTitle>
-                  <CardDescription>Các chuyên ngành nghiên cứu thuộc lĩnh vực kinh tế</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Quản trị kinh doanh
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Quản trị dịch vụ du lịch và lữ hành
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Tài chính Ngân hàng
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Kế toán
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Ngoại thương
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Luật Kinh tế
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Marketing
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Kinh doanh Quốc tế
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Chuỗi cung ứng
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="cong-nghe">
-              <Card>
-                <CardHeader>
-                  <CardTitle>3.2. Lĩnh vực Khoa học Công nghệ</CardTitle>
-                  <CardDescription>Các chuyên ngành nghiên cứu thuộc lĩnh vực khoa học công nghệ</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Công nghệ kỹ thuật ô tô
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Công nghệ tự động hóa
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Công nghệ kỹ thuật Điện - Điện tử
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Công nghệ kỹ thuật Cơ khí
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Linh kiện điện tử, công suất và ứng dụng
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Hệ thống lưu trữ năng lượng, truyền tải điện không dây
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Lưới điện thông minh và các vấn đề liên quan
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Hệ thống truyền động điện và phương pháp điều khiển
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Năng lượng tái tạo, năng lượng mới và hệ thống năng lượng lai
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Hệ thống điều khiển thông minh
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Truyền thông (IoT)
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Robot và hệ thống tự động trong công nghiệp
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Mạng máy tính và truyền thông
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      An toàn thông tin
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Công nghệ phần mềm
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Khai thác dữ liệu
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Hệ thống quản lý thông tin
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Trí tuệ nhân tạo và Robotics
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Xử lý ảnh
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Học máy và ứng dụng
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Truyền thông đa phương tiện
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Công nghệ Blockchain
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="hoa-duoc">
-              <Card>
-                <CardHeader>
-                  <CardTitle>3.3. Lĩnh vực Hóa - Dược</CardTitle>
-                  <CardDescription>Các chuyên ngành nghiên cứu thuộc lĩnh vực hóa học và dược phẩm</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Công nghệ dược phẩm và bào chế thuốc
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Dược liệu và Dược học cổ truyền
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Dược lý và Dược lâm sàng
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Kiểm nghiệm Dược phẩm
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Kinh tế Dược
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Công nghệ thực phẩm
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Đảm bảo chất lượng và an toàn thực phẩm
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Quản lý môi trường
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Công nghệ môi trường
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Công nghệ sinh học
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Công nghệ kỹ thuật hóa học
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="xa-hoi">
-              <Card>
-                <CardHeader>
-                  <CardTitle>3.4. Lĩnh vực Xã hội</CardTitle>
-                  <CardDescription>Các chuyên ngành nghiên cứu thuộc lĩnh vực xã hội</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Văn hóa
-                    </li>
-                    <li className="flex items-center">
-                      <div className="h-2 w-2 rounded-full bg-primary mr-2"></div>
-                      Ngôn ngữ
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </motion.div>
-      </section>
-
-      {/* Editorial Board Section */}
-      <section className="mb-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
-        >
-          <h2 className="text-2xl md:text-3xl font-bold mb-6 text-primary">Ban biên tập</h2>
-
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle>HỘI ĐỒNG BIÊN TẬP</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-primary/5 rounded-lg">
-                  <h4 className="font-medium text-primary mb-1">Tổng Biên tập:</h4>
-                  <p>NGƯT.TS. Nguyễn Thị Thu Lan</p>
-                </div>
-                <div className="p-4 bg-primary/5 rounded-lg">
-                  <h4 className="font-medium text-primary mb-1">Chủ tịch Hội đồng:</h4>
-                  <p>TS. Lâm Thành Hiển</p>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-medium text-primary mb-3">Phó Chủ tịch Hội đồng:</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-3 bg-primary/5 rounded-lg">PGS.TS. Nguyễn Vũ Quỳnh</div>
-                  <div className="p-3 bg-primary/5 rounded-lg">TS. Nguyễn Văn Tân</div>
-                  <div className="p-3 bg-primary/5 rounded-lg">TS. Mai Thị Ánh Tuyết</div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 bg-primary/5 rounded-lg">
-                  <h4 className="font-medium text-primary mb-1">Trưởng ban biên tập:</h4>
-                  <p>TS. Nguyễn Thanh Sơn</p>
-                </div>
-                <div className="p-4 bg-primary/5 rounded-lg">
-                  <h4 className="font-medium text-primary mb-1">Thư ký tòa soạn:</h4>
-                  <p>TS. Lê Phương Long</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <h3 className="text-xl font-bold mb-4">THÀNH VIÊN HỘI ĐỒNG BIÊN TẬP</h3>
-
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="kinh-te">
-              <AccordionTrigger className="text-lg font-medium">
-                <div className="flex items-center">
-                  <Briefcase className="h-5 w-5 mr-2 text-primary" />
-                  LĨNH VỰC KINH TẾ
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-2 pl-4">
-                  <p>GS.TS. Nguyễn Đông Phong, Trường Đại học Kinh tế TP. Hồ Chí Minh (Cố vấn)</p>
-                  <p>PGS.TS. Nguyễn Thị Liên Diệp, Trường Đại học Lạc Hồng</p>
-                  <p>PGS.TS. Lưu Thanh Đức Hải, Trường Đại học Cần Thơ</p>
-                  <p>PGS.TS. Phước Minh Hiệp, Trường Đại học Quốc tế Sài Gòn</p>
-                  <p>PGS.TS. Lê Văn Huy, Trường Đại học Kinh tế - Đại học Đà Nẵng</p>
-                  <p>PGS.TS. Nguyễn Thanh Lâm, Trường Đại học Lạc Hồng</p>
-                  <p>PGS.TS. Nguyễn Quyết Thắng, Trường Đại học Công nghệ TP. Hồ Chí Minh</p>
-                  <p>PGS.TS. Trương Nam Thắng, Trường Đại học Kinh tế Quốc dân</p>
-                  <p>PGS.TS. Bùi Thị Thanh, Trường Đại học Kinh tế TP. Hồ Chí Minh</p>
-                  <p>TS. Trần Đăng Khoa, Trường Đại học Kinh tế TP. Hồ Chí Minh</p>
-                  <p>TS. Phùng Ngọc Bảo, Tạp chí Cộng sản</p>
-                  <p>TS. Nguyễn Văn Hải, Trường Đại học Lạc Hồng</p>
-                  <p>TS. Võ Tấn Phong, Trường Đại học Lạc Hồng</p>
-                  <p>TS. Nguyễn Văn Tân, Trường Đại học Lạc Hồng</p>
-                  <p>TS. Phan Thành Tâm, Trường Đại học Lạc Hồng</p>
-                  <p>TS. Mai Thị Ánh Tuyết, Trường Đại học Lạc Hồng</p>
-                  <p>TS. Trần Hoàng Minh, Trường Đại học Lạc Hồng</p>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="cong-nghe">
-              <AccordionTrigger className="text-lg font-medium">
-                <div className="flex items-center">
-                  <Cpu className="h-5 w-5 mr-2 text-primary" />
-                  LĨNH VỰC KHOA HỌC CÔNG NGHỆ
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-2 pl-4">
-                  <p>PGS.TS. Huỳnh Văn Hóa Trường Đại học Lạc Hồng</p>
-                  <p>PGS.TS. Trần Văn Lăng, Viện Cơ học và Tin học ứng dụng</p>
-                  <p>PGS.TS. Nguyễn Ngọc Lâm, Trường Đại Học Lạc Hồng</p>
-                  <p>PGS.TS. Nguyễn Văn Nhờ, Trường Đại học Bách Khoa TP. Hồ Chí Minh</p>
-                  <p>PGS.TS. Lê Văn Phúc, Trường Đại học Giao thông - Vận tải TP. HCM</p>
-                  <p>PGS.TS. Nguyễn Vũ Quỳnh, Trường Đại Học Lạc Hồng</p>
-                  <p>TS. Trần Xuân Hòa, Trường Đại học Giao thông - Vận tải TP. HCM</p>
-                  <p>TS. Hà Mạnh Hùng, Trường Quốc tế (Đại học Quốc gia Hà Nội)</p>
-                  <p>TS. Lê Tiến Lộc, Trường Đại học Lạc Hồng</p>
-                  <p>TS. Lê Phương Long, Trường Đại học Lạc Hồng</p>
-                  <p>TS. Nguyễn Thanh Sơn, Trường Đại học Lạc Hồng</p>
-                  <p>TS. Lê Phương Trường, Trường Đại học Lạc Hồng</p>
-                  <p>TS. Phan Như Quân, Trường Đại học Lạc Hồng</p>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="hoa-duoc">
-              <AccordionTrigger className="text-lg font-medium">
-                <div className="flex items-center">
-                  <Flask className="h-5 w-5 mr-2 text-primary" />
-                  LĨNH VỰC HÓA - DƯỢC
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-2 pl-4">
-                  <p>PGS.TS. Võ Thị Bạch Huệ, Trường Đại học Lạc Hồng</p>
-                  <p>TS. Phạm Ngọc Tuấn Anh, Trường Đại học Y Dược TP. Hồ Chí Minh</p>
-                  <p>TS. Nguyễn Trọng Anh, Trường Đại học Lạc Hồng</p>
-                  <p>TS. Cao Văn Dư, Trường Đại học Lạc Hồng</p>
-                  <p>TS. Lê Thị Thu Hương, Trường Đại học Lạc Hồng</p>
-                  <p>TS. Hồ Dũng Mạnh, Trường Đại học Lạc Hồng</p>
-                  <p>TS. Nguyễn Thị Như Quỳnh, Trường Đại học Lạc Hồng</p>
-                  <p>TS. Nguyễn Hữu Lạc Thủy, Trường Đại học Y Dược TP. Hồ Chí Minh</p>
-                  <p>TS. Trương Ngọc Tuyền, Trường Đại học Y Dược TP. Hồ Chí Minh</p>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="xa-hoi">
-              <AccordionTrigger className="text-lg font-medium">
-                <div className="flex items-center">
-                  <Globe className="h-5 w-5 mr-2 text-primary" />
-                  LĨNH VỰC XÃ HỘI
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-2 pl-4">
-                  <p>TS. Nguyễn Phước Hiền, Trường Đại học Nguyễn Tất Thành TP. Hồ Chí Minh</p>
-                  <p>TS. Nguyễn Thị Hiền, Trường Đại học Khoa học Xã hội và Nhân văn TP. HCM</p>
-                  <p>TS. Ngô Hương Lan, Trường Đại học Văn Lang</p>
-                  <p>TS. Nguyễn Hữu Nghị, Trường Đại Học Lạc Hồng</p>
-                  <p>TS. Trần Thị Phong, Đài Phát thanh và Truyền hình Đồng Nai</p>
-                  <p>TS. Trương Phan Châu Tâm, Trường Đại học Khoa học Xã hội và Nhân văn TP. HCM</p>
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </motion.div>
-      </section>
-
-      {/* Call to Action */}
-      <section className="mb-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
-          className="bg-gradient-to-r from-primary to-secondary text-white rounded-xl p-8 text-center"
-        >
-          <h2 className="text-2xl md:text-3xl font-bold mb-4">Gửi bài báo khoa học</h2>
-          <p className="mb-6 max-w-2xl mx-auto">
-            Mời các nhà nghiên cứu, giảng viên và sinh viên gửi bài báo khoa học để đăng tải trên Tạp chí Khoa học Lạc
-            Hồng.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <button className="bg-white text-primary hover:bg-opacity-90 px-6 py-3 rounded-lg font-medium flex items-center">
-              Hướng dẫn gửi bài
-              <ChevronDown className="ml-2 h-4 w-4" />
-            </button>
-            <button className="bg-white/20 hover:bg-white/30 px-6 py-3 rounded-lg font-medium flex items-center">
-              Liên hệ Ban biên tập
-              <ExternalLink className="ml-2 h-4 w-4" />
-            </button>
-          </div>
-        </motion.div>
-      </section>
+      {/* Contact Section */}
+      <ContactSection />
     </div>
+  )
+}
+
+const HeroSection = () => {
+  return (
+    <section className="relative overflow-hidden bg-gradient-to-r from-primary/90 to-primary py-20 lg:py-32">
+      <div className="absolute inset-0 bg-grid-white/5 bg-[size:20px_20px] [mask-image:linear-gradient(to_bottom,white,transparent)]" />
+      
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="container relative z-10"
+      >
+        <div className="mx-auto max-w-3xl text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            <Badge className="mb-4 bg-white/10 text-white border-white/20 backdrop-blur-sm">
+              Tạp chí Khoa học Lạc Hồng
+            </Badge>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+            className="mb-6 text-4xl font-bold tracking-tight text-white sm:text-5xl"
+          >
+            Nền tảng xuất bản và chia sẻ nghiên cứu khoa học
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+            className="mb-8 text-lg text-white/90"
+          >
+            Tạp chí đa ngành với sứ mệnh công bố các kết quả nghiên cứu khoa học thuộc lĩnh vực đào tạo, 
+            giảng dạy của Trường Đại học Lạc Hồng và cộng đồng khoa học.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.6 }}
+            className="flex flex-wrap justify-center gap-4"
+          >
+            <Button
+              size="lg"
+              className="bg-white text-primary hover:bg-white/90"
+              onClick={() => navigate("/post-article")}
+            >
+              Gửi bài báo
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white text-white hover:bg-white/10"
+              onClick={() => navigate("/article")}
+            >
+              Xem bài báo
+              <Search className="ml-2 h-4 w-4" />
+            </Button>
+          </motion.div>
+        </div>
+      </motion.div>
+    </section>
+  )
+}
+
+const QuickActions = () => {
+  const controls = useAnimation()
+  const inView = useInView({ once: true, threshold: 0.2 })
+
+  useEffect(() => {
+    if (inView) {
+      controls.start((i) => ({
+        opacity: 1,
+        y: 0,
+        transition: { delay: i * 0.1 },
+      }))
+    }
+  }, [inView, controls])
+
+  const actions = [
+    {
+      title: "Gửi bài báo",
+      description: "Hướng dẫn chi tiết quy trình gửi bài",
+      icon: FileText,
+      link: "/post-article",
+    },
+    {
+      title: "Tìm kiếm",
+      description: "Tra cứu bài báo theo chủ đề",
+      icon: Search,
+      link: "/article",
+    },
+    {
+      title: "Liên hệ",
+      description: "Thông tin liên hệ Ban biên tập",
+      icon: Mail,
+      link: "/contact",
+    },
+  ]
+
+  return (
+    <section className="py-16">
+      <div className="container">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {actions.map((action, i) => (
+            <motion.div
+              key={action.title}
+              custom={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={controls}
+            >
+              <Card className="group relative overflow-hidden transition-all hover:shadow-lg">
+                <CardContent className="p-6">
+                  <div className="mb-4 inline-flex rounded-lg bg-primary/10 p-3 text-primary">
+                    <action.icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="mb-2 font-semibold">{action.title}</h3>
+                  <p className="text-sm text-muted-foreground">{action.description}</p>
+                  <Button
+                    variant="ghost"
+                    className="mt-4 w-full justify-between"
+                    onClick={() => navigate(action.link)}
+                  >
+                    Xem thêm
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+const LatestArticles = () => {
+  const controls = useAnimation()
+  const inView = useInView({ once: true, threshold: 0.2 })
+
+  useEffect(() => {
+    if (inView) {
+      controls.start({ opacity: 1, y: 0 })
+    }
+  }, [inView, controls])
+
+  return (
+    <section className="bg-muted/50 py-16">
+      <div className="container">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={controls}
+          className="mb-10 text-center"
+        >
+          <Badge className="mb-4">Bài báo mới</Badge>
+          <h2 className="mb-4 text-3xl font-bold">Bài báo mới xuất bản</h2>
+          <p className="mx-auto max-w-2xl text-muted-foreground">
+            Các bài báo mới nhất đã được xuất bản trên Tạp chí Khoa học Lạc Hồng
+          </p>
+        </motion.div>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {/* Placeholder articles - replace with real data */}
+          {[1, 2, 3].map((i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={controls}
+              transition={{ delay: i * 0.1 }}
+            >
+              <Card className="group cursor-pointer transition-all hover:shadow-lg">
+                <CardContent className="p-6">
+                  <div className="mb-4 aspect-video overflow-hidden rounded-lg bg-muted">
+                    <div className="h-full w-full bg-muted" />
+                  </div>
+                  <Badge variant="outline" className="mb-2">
+                    Khoa học công nghệ
+                  </Badge>
+                  <h3 className="mb-2 line-clamp-2 font-semibold">
+                    Nghiên cứu và phát triển hệ thống IoT trong nông nghiệp thông minh
+                  </h3>
+                  <p className="mb-4 line-clamp-2 text-sm text-muted-foreground">
+                    Ứng dụng công nghệ IoT trong việc giám sát và điều khiển tự động các thông số môi trường...
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">
+                      {new Date().toLocaleDateString()}
+                    </span>
+                    <Button variant="ghost" size="sm">
+                      Đọc thêm
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="mt-10 text-center">
+          <Button onClick={() => navigate("/article")}>
+            Xem tất cả bài báo
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+const ResearchAreas = () => {
+  const controls = useAnimation()
+  const inView = useInView({ once: true, threshold: 0.2 })
+
+  useEffect(() => {
+    if (inView) {
+      controls.start((i) => ({
+        opacity: 1,
+        y: 0,
+        transition: { delay: i * 0.1 },
+      }))
+    }
+  }, [inView, controls])
+
+  const areas = [
+    {
+      icon: Briefcase,
+      title: "Kinh tế",
+      description: "Quản trị kinh doanh, Tài chính, Marketing",
+    },
+    {
+      icon: Cpu,
+      title: "Công nghệ",
+      description: "Công nghệ thông tin, Tự động hóa, IoT",
+    },
+    {
+      icon: Flask,
+      title: "Hóa - Dược",
+      description: "Dược phẩm, Công nghệ Hóa học",
+    },
+    {
+      icon: Globe,
+      title: "Xã hội",
+      description: "Văn hóa, Ngôn ngữ, Giáo dục",
+    },
+  ]
+
+  return (
+    <section className="py-16">
+      <div className="container">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={controls}
+          className="mb-10 text-center"
+        >
+          <Badge className="mb-4">Lĩnh vực nghiên cứu</Badge>
+          <h2 className="mb-4 text-3xl font-bold">Các lĩnh vực chính</h2>
+          <p className="mx-auto max-w-2xl text-muted-foreground">
+            Tạp chí Khoa học Lạc Hồng chấp nhận các bài báo thuộc nhiều lĩnh vực khác nhau
+          </p>
+        </motion.div>
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {areas.map((area, i) => (
+            <motion.div
+              key={area.title}
+              custom={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={controls}
+            >
+              <Card className="group cursor-pointer transition-all hover:shadow-lg">
+                <CardContent className="p-6 text-center">
+                  <div className="mx-auto mb-4 inline-flex rounded-lg bg-primary/10 p-3 text-primary">
+                    <area.icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="mb-2 font-semibold">{area.title}</h3>
+                  <p className="text-sm text-muted-foreground">{area.description}</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+const ContactSection = () => {
+  const controls = useAnimation()
+  const inView = useInView({ once: true, threshold: 0.2 })
+
+  useEffect(() => {
+    if (inView) {
+      controls.start({ opacity: 1, y: 0 })
+    }
+  }, [inView, controls])
+
+  return (
+    <section className="bg-muted/50 py-16">
+      <div className="container">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={controls}
+          className="mx-auto max-w-2xl text-center"
+        >
+          <Badge className="mb-4">Liên hệ</Badge>
+          <h2 className="mb-4 text-3xl font-bold">Liên hệ với Ban biên tập</h2>
+          <p className="mb-8 text-muted-foreground">
+            Nếu bạn có bất kỳ câu hỏi nào, vui lòng liên hệ với chúng tôi
+          </p>
+
+          <div className="grid gap-6 sm:grid-cols-2">
+            <Card>
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="rounded-full bg-primary/10 p-3 text-primary">
+                  <Mail className="h-6 w-6" />
+                </div>
+                <div className="text-left">
+                  <p className="font-medium">Email</p>
+                  <p className="text-sm text-muted-foreground">tapchi@lhu.edu.vn</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="flex items-center gap-4 p-6">
+                <div className="rounded-full bg-primary/10 p-3 text-primary">
+                  <Phone className="h-6 w-6" />
+                </div>
+                <div className="text-left">
+                  <p className="font-medium">Điện thoại</p>
+                  <p className="text-sm text-muted-foreground">(0251) 3951 777</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Button className="mt-8" size="lg" onClick={() => navigate("/contact")}>
+            Liên hệ ngay
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </motion.div>
+      </div>
+    </section>
   )
 }
 
